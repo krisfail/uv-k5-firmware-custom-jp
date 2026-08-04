@@ -106,6 +106,16 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
     def test_build_defaults_enable_receive_only_mode(self) -> None:
         makefile = _read("Makefile")
 
+        self.assertRegex(
+            makefile,
+            re.compile(r"^ENABLE_JAPANESE\s*\?=\s*1\s*$", re.MULTILINE),
+        )
+        self.assertIn("CFLAGS  += -DENABLE_JAPANESE", makefile)
+        self.assertIn("AUTHOR_STRING_2 ?= Kris", makefile)
+        self.assertIn("VERSION_STRING_2 ?= v4.3J", makefile)
+        self.assertIn("EDITION_STRING ?= JP-RX-Only", makefile)
+        self.assertIn("AUTHOR_STRING_2 ?= F4HWN", makefile)
+
         for option in ("ENABLE_VOX", "ENABLE_TX1750"):
             self.assertRegex(
                 makefile,
@@ -254,6 +264,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         font_source = _read("font.c")
         helper = _read("ui/helper.c")
         menu = _read("ui/menu.c")
+        readme = _read("README.md")
 
         self.assertIn("#define FONT_CODE_MAX 0xDF", font_header)
         self.assertRegex(font_header, re.compile(r"gFontBig\[191\]"))
@@ -266,6 +277,18 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         self.assertRegex(
             active_big_font,
             re.compile(r"\},\s*// '->',\s*\n\s*\{0x00.*//0x7F"),
+        )
+        hyphen = re.search(
+            r"^\s*\{(?P<values>[^}]+)\},\s*// '-'\s*$",
+            active_big_font,
+            re.MULTILINE,
+        )
+        self.assertIsNotNone(hyphen)
+        self.assertTrue(
+            any(
+                int(value, 0)
+                for value in re.findall(r"0x[0-9A-Fa-f]+", hyphen.group("values"))
+            )
         )
         self.assertIn("const uint8_t code = (uint8_t)pString[i];", helper)
         self.assertIn("is_extended_small", helper)
@@ -286,6 +309,21 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         for menu_id in ("MENU_STEP", "MENU_R_DCS", "MENU_R_CTCS", "MENU_TDR", "MENU_SQL"):
             self.assertIn(menu_id, menu)
         self.assertIn("0x80, 0x81, 0xD3", menu)
+        self.assertIn("{{0xB7, '-', 0xDB, 0xAF, 0xB8}", menu)
+        self.assertIn("{{0xB7, '-', 0x8E}", menu)
+        self.assertNotIn("0xB7, 0xB0", menu)
+        for label in ("BLTime", "BLMin", "BLMax", "LCDCtr", "LCDInv", "SMeter", "Sleep"):
+            with self.subTest(label=label):
+                self.assertIn(label, menu)
+        for marker in (
+            "v4.3J",
+            "JP-RX-Only",
+            "モニター機能に割り当てています",
+            "76.0–95.0 MHz",
+            "Flashing-the-firmware",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, readme)
 
     def test_fm_radio_is_fixed_to_the_japanese_receive_band(self) -> None:
         makefile = _read("Makefile")

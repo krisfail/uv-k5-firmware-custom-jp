@@ -24,6 +24,75 @@ Anyway, have fun.
 >
 > _FR - Je recommande de sauvegarder votre eeprom avec [k5prog](https://github.com/sq5bpf/k5prog) avant de jouer avec des firmwares alternatifs. C'est un bon réflexe à avoir._
 
+## 日本語・受信専用版（v4.3J / JP-RX-Only）
+
+このディレクトリのUV-K5向けビルドは、**日本語表示と受信専用運用**を目的にした版です。表示名は`Kris v4.3J`、エディション名は`JP-RX-Only`です。
+
+- 送信処理と送信系メニューを無効化しています。PTTは送信開始ではなく、モニター機能に割り当てています。
+- FM放送受信は日本向けに`76.0–95.0 MHz`へ固定しています。
+- 日本語フォントは[uv-k5-jp](https://github.com/rainy-knight/uv-k5-jp)のフォントデータを参考にしています。表示幅の制約により、一部のメニュー名は`LCDCtr`、`SMeter`、`Sleep`などの短い表記を残しています。
+- 受信専用版では送信機能がないため、送信出力・PTTモード・TOT・送信CTCSS/DCSなどの設定は通常メニューから除外しています。
+
+### 基本操作
+
+上流版の操作体系は[armel版Wiki](https://github.com/armel/uv-k5-firmware-custom/wiki)に準拠しています。主な操作は次のとおりです。
+
+| 操作 | 動作 |
+| --- | --- |
+| `M`短押し | メニューを開く |
+| `UP` / `DOWN` | メニュー項目・周波数・設定値を移動 |
+| `M` | 項目を確定 |
+| `EXIT` | キャンセル、または現在の画面を終了 |
+| `F` + `2 A/B` | 上側／下側VFOを選択 |
+| `F` + `3 VFO/MR` | 周波数モード／メモリーチャンネルモードを切替 |
+| `PTT` | モニターを切替（送信しない） |
+| `F` + `0 FM` | FM放送受信を開く |
+| `* SCAN`長押し | 周波数またはメモリーチャンネルをスキャン |
+
+メニュー番号を数字キーで入力すると、目的の項目へ直接移動できます。設定画面では`UP`／`DOWN`で値を選び、`M`で確定、`EXIT`で取り消します。詳しいボタン割り当ては[Button functions](https://github.com/armel/uv-k5-firmware-custom/wiki/Button-functions)、メニューの一覧は[Menu](https://github.com/armel/uv-k5-firmware-custom/wiki/Menu)、周波数・チャンネル操作は[Radio operation](https://github.com/armel/uv-k5-firmware-custom/wiki/Radio-operation)を参照してください。
+
+### 日本語メニューの読み方
+
+| 表示 | 意味 |
+| --- | --- |
+| `ステップ` | 周波数の刻み幅 |
+| `受信DCS` / `受信CTCS` | 受信時のDCS／CTCSSトーン設定 |
+| `変調` | FM・AM・USBなどの受信方式 |
+| `CH追加1`～`CH追加3` | 現在のチャンネルをスキャンリストへ追加 |
+| `CH保存` / `CH削除` / `CH名` | メモリーチャンネルの保存・削除・名前変更 |
+| `Sリスト` | 使用するスキャンリストの選択 |
+| `F1短押` / `F1長押`、`F2短押` / `F2長押` | サイドボタンの短押し／長押し機能 |
+| `キーロック` | 自動キーロックの待ち時間 |
+| `電圧%表示` | ステータスバーの電圧・電池残量表示 |
+| `CH表示` | 周波数・チャンネル番号・名前の表示形式 |
+| `ON画面` | 電源投入時の表示内容 |
+| `BLTime` / `BLMin` / `BLMax` | バックライトの点灯時間・最小輝度・最大輝度 |
+| `キー音` | キー操作音 |
+| `SysInf` | ファームウェア版、電池電圧・残量の情報 |
+| `受信モード` | MAIN ONLYまたはDUAL RXの受信動作 |
+| `スケルチ` | 無信号時に音声を抑えるレベル |
+| `LCDCtr` / `LCDInv` | LCDコントラスト・表示反転 |
+| `SMeter` / `SetGUI` | Sメーター形式・画面レイアウト |
+| `Sleep` / `SetNFM` | 無操作時のスリープ・狭帯域FM幅 |
+
+長音記号（`ー`）は、大小どちらのフォントでも表示できるASCIIの`-`としてメニュー文字列に格納しています。これにより、`キーロック`や`キー音`を大きい文字で表示したときも空白になりません。
+
+### ビルドと書き込み
+
+ARM GNUツールチェーン（`arm-none-eabi-gcc`）とPythonが必要です。まずホスト側の回帰チェックを実行します。
+
+```text
+make test
+```
+
+ファームウェアを作成する場合は次を実行します。
+
+```text
+make
+```
+
+通常は`f4hwn.packed.bin`を使用します。書き込み前にEEPROMをバックアップし、書き込み手順は[Flashing the firmware](https://github.com/armel/uv-k5-firmware-custom/wiki/Flashing-the-firmware)を確認してください。機種差や書き込み環境による失敗を避けるため、対象機種に対応したファイルだけを使用してください。
+
 # Donations
 
 Special thanks to Jean-Cyrille F6IWW (2 times), Fabrice 14RC123, David F4BPP, Olivier 14RC206, Frédéric F4ESO, Stéphane F5LGW, Jorge Ornelas (4 times), Laurent F4AXK, Christophe Morel, Clayton W0LED, Pierre Antoine F6FWB, Jean-Claude 14FRS3306, Thierry F4GVO, Eric F1NOU, PricelessToolkit, Ady M6NYJ, Tom McGovern (4 times), Joseph Roth, Pierre-Yves Colin, Frank DJ7FG, Marcel Testaz, Brian Frobisher, Yannick F4JFO, Paolo Bussola, Dirk DL8DF, Levente Szőke (2 times), Bernard-Michel Herrera, Jérôme Saintespes, Paul Davies, RS (3 times), Johan F4WAT, Robert Wörle, Rafael Sundorf, Paul Harker, Peter Fintl, Pascal F4ICR (2 times), Mike DL2MF, Eric KI1C (2 times), Phil G0ELM, Jérôme Lambert, Meinhard Frank Günther, Eliot Vedel, Alfonso EA7KDF, Jean-François F1EVM, Robert DC1RDB, Ian KE2CHJ, Daryl VK3AWA, Roberto Brunelli, Robert Boardman, Stephen Oliver, Nicolas F4INE and William Bruno for their [donations](https://www.paypal.com/paypalme/F4HWN). That’s so kind of them. Thanks so much 🙏🏻

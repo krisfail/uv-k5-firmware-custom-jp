@@ -92,25 +92,25 @@ const t_menu_item MenuList[] =
     {{'F', '2', 0x8B, 0x8D}, MENU_F2LONG}, // F2長押
     {{'M', 0x8B, 0x8D}, MENU_MLONG}, // M長押
 
-    {{0xB7, 0xB0, 0xDB, 0xAF, 0xB8}, MENU_AUTOLK}, // キーロック
+    {{0xB7, '-', 0xDB, 0xAF, 0xB8}, MENU_AUTOLK}, // キーロック
 #ifndef ENABLE_RX_ONLY
     {"TxTOut",      MENU_TOT           }, // was "TOT"
 #endif
     {"BatSav",      MENU_SAVE          }, // was "SAVE"
-    {{0x8F, 0x90, 0x93, 0x94}, MENU_BAT_TXT}, // 電源表示
+    {{0x8F, 0x92, '%', 0x93, 0x94}, MENU_BAT_TXT}, // 電圧/%表示
 #ifndef ENABLE_RX_ONLY
     {"Mic",         MENU_MIC           },
     {"MicBar",      MENU_MIC_BAR       },
 #endif
     {{'C', 'H', 0x93, 0x94}, MENU_MDF}, // CH表示
     {{'O', 'N', 0x95, 0x96}, MENU_PONMSG}, // ON画面
-    {{0x95, 0x96, 0x93, 0x94}, MENU_ABR}, // 画面表示
-    {{0x95, 0x96, 'M', 'i', 'n'}, MENU_ABR_MIN}, // 画面Min
-    {{0x95, 0x96, 'M', 'a', 'x'}, MENU_ABR_MAX}, // 画面Max
+    {"BLTime",      MENU_ABR}, // バックライト点灯時間
+    {"BLMin",       MENU_ABR_MIN}, // バックライト最小輝度
+    {"BLMax",       MENU_ABR_MAX}, // バックライト最大輝度
 #ifndef ENABLE_RX_ONLY
     {"BLTxRx",      MENU_ABR_ON_TX_RX  },
 #endif
-    {{0xB7, 0xB0, 0x8E}, MENU_BEEP}, // キー音
+    {{0xB7, '-', 0x8E}, MENU_BEEP}, // キー音
 #ifdef ENABLE_VOICE
     {"Voice",       MENU_VOICE         },
 #endif
@@ -174,16 +174,16 @@ const t_menu_item MenuList[] =
     {"SetTOT",      MENU_SET_TOT       },
     {"SetEOT",      MENU_SET_EOT       },
 #endif
-    {"SetCtr",      MENU_SET_CTR       },
-    {"SetInv",      MENU_SET_INV       },
-    {{0xB7, 0xB0, 0xDB, 0xAF, 0xB8}, MENU_SET_LCK}, // キーロック
-    {"SetMet",      MENU_SET_MET       },
+    {"LCDCtr",      MENU_SET_CTR       },
+    {"LCDInv",      MENU_SET_INV       },
+    {{0xB7, '-', 0xDB, 0xAF, 0xB8}, MENU_SET_LCK}, // キーロック
+    {"SMeter",      MENU_SET_MET       },
     {"SetGUI",      MENU_SET_GUI       },
 #ifndef ENABLE_RX_ONLY
     {"SetTmr",      MENU_SET_TMR       },
 #endif
 #ifdef ENABLE_FEAT_F4HWN_SLEEP
-    {"SetOff",       MENU_SET_OFF      },
+    {"Sleep",        MENU_SET_OFF      },
 #endif
 #ifdef ENABLE_FEAT_F4HWN_NARROWER
     {"SetNFM",      MENU_SET_NFM       },

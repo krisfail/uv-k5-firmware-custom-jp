@@ -20,6 +20,8 @@
 // also the space char is not needed 
 // The 0x80-0xDF range uses Japanese glyphs adapted from
 // https://github.com/rainy-knight/uv-k5-jp (Apache-2.0).
+// Japanese menu strings encode the long vowel mark (ー) as ASCII '-'
+// so the existing big and small hyphen glyphs are shared.
 const uint8_t gFontBig[191][16 - 2] =
 {
 #if 0

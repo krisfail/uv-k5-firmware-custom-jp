@@ -40,6 +40,8 @@ ENABLE_REDUCE_LOW_MID_TX_POWER  ?= 0
 ENABLE_BYP_RAW_DEMODULATORS     ?= 0
 ENABLE_BLMIN_TMP_OFF            ?= 0
 ENABLE_SCAN_RANGES              ?= 1
+# Select the Japanese firmware identity and compile-time code paths.
+ENABLE_JAPANESE                 ?= 1
 
 # ---- CONTRIB MODS ----
 
@@ -261,10 +263,16 @@ ifeq ($(ENABLE_FEAT_F4HWN),1)
 	AUTHOR_STRING_1 ?= EGZUMER
 	VERSION_STRING_1 ?= v0.22
 
-	AUTHOR_STRING_2 ?= F4HWN
-	VERSION_STRING_2 ?= v4.3
-
-	EDITION_STRING ?= Custom
+	# F4HWN uses the _2 fields for the displayed and packed firmware identity.
+	ifeq ($(ENABLE_JAPANESE),1)
+		AUTHOR_STRING_2 ?= Kris
+		VERSION_STRING_2 ?= v4.3J
+		EDITION_STRING ?= JP-RX-Only
+	else
+		AUTHOR_STRING_2 ?= F4HWN
+		VERSION_STRING_2 ?= v4.3
+		EDITION_STRING ?= Custom
+	endif
 
 	AUTHOR_STRING ?= $(AUTHOR_STRING_1)+$(AUTHOR_STRING_2)
 	VERSION_STRING ?= $(VERSION_STRING_2)
@@ -460,6 +468,9 @@ ifeq ($(ENABLE_UART_RW_BK_REGS),1)
 endif
 ifeq ($(ENABLE_CUSTOM_MENU_LAYOUT),1)
 	CFLAGS  += -DENABLE_CUSTOM_MENU_LAYOUT
+endif
+ifeq ($(ENABLE_JAPANESE),1)
+	CFLAGS  += -DENABLE_JAPANESE
 endif
 ifeq ($(ENABLE_FEAT_F4HWN),1)
 	CFLAGS  += -DENABLE_FEAT_F4HWN
