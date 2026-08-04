@@ -921,6 +921,10 @@ void RADIO_SetupRegisters(bool switchToForeground)
 
 void RADIO_SetTxParameters(void)
 {
+#ifdef ENABLE_RX_ONLY
+    return;
+#endif
+
     BK4819_FilterBandwidth_t Bandwidth = gCurrentVfo->CHANNEL_BANDWIDTH;
 
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
@@ -1073,6 +1077,11 @@ void RADIO_SetVfoState(VfoState_t State)
 
 void RADIO_PrepareTX(void)
 {
+#ifdef ENABLE_RX_ONLY
+    RADIO_SetVfoState(VFO_STATE_TX_DISABLE);
+    return;
+#endif
+
     VfoState_t State = VFO_STATE_NORMAL;  // default to OK to TX
 
     if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF)
@@ -1202,6 +1211,10 @@ void RADIO_PrepareTX(void)
 
 void RADIO_SendCssTail(void)
 {
+#ifdef ENABLE_RX_ONLY
+    return;
+#endif
+
     switch (gCurrentVfo->pTX->CodeType) {
     case CODE_TYPE_DIGITAL:
     case CODE_TYPE_REVERSE_DIGITAL:
@@ -1217,6 +1230,11 @@ void RADIO_SendCssTail(void)
 
 void RADIO_SendEndOfTransmission(void)
 {
+#ifdef ENABLE_RX_ONLY
+    RADIO_SetupRegisters(false);
+    return;
+#endif
+
     BK4819_PlayRoger();
     DTMF_SendEndOfTransmission();
 
@@ -1228,6 +1246,10 @@ void RADIO_SendEndOfTransmission(void)
 
 void RADIO_PrepareCssTX(void)
 {
+#ifdef ENABLE_RX_ONLY
+    return;
+#endif
+
     RADIO_PrepareTX();
 
     SYSTEM_DelayMs(200);

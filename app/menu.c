@@ -164,7 +164,11 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
 
         case MENU_TDR:
             //*pMin = 0;
+#ifdef ENABLE_RX_ONLY
+            *pMax = 1;
+#else
             *pMax = ARRAY_SIZE(gSubMenu_RXMode) - 1;
+#endif
             break;
 
         #ifdef ENABLE_VOICE
@@ -622,7 +626,11 @@ void MENU_AcceptSetting(void)
 
         case MENU_TDR:
             gEeprom.DUAL_WATCH = (gEeprom.TX_VFO + 1) * (gSubMenuSelection & 1);
+#ifdef ENABLE_RX_ONLY
+            gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+#else
             gEeprom.CROSS_BAND_RX_TX = (gEeprom.TX_VFO + 1) * ((gSubMenuSelection & 2) > 0);
+#endif
 
             #ifdef ENABLE_FEAT_F4HWN
                 gDW = gEeprom.DUAL_WATCH;
@@ -1135,7 +1143,11 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_TDR:
+#ifdef ENABLE_RX_ONLY
+            gSubMenuSelection = (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF);
+#else
             gSubMenuSelection = (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) + (gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF) * 2;
+#endif
             break;
 
         case MENU_BEEP:

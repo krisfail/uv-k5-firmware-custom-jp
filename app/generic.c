@@ -16,6 +16,7 @@
 
 #include <string.h>
 
+#include "app/action.h"
 #include "app/app.h"
 #include "app/chFrScanner.h"
 #include "app/common.h"
@@ -153,6 +154,13 @@ void GENERIC_Key_PTT(bool bKeyPressed)
         gRequestDisplayScreen = DISPLAY_FM;
         goto cancel_tx;
     }
+#endif
+
+#ifdef ENABLE_RX_ONLY
+    // In the receive-only build PTT is the same toggle action as the
+    // configurable MONITOR side key. A release must not toggle it again.
+    ACTION_Monitor();
+    goto done;
 #endif
 
 #ifdef ENABLE_FMRADIO

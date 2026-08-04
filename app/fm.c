@@ -357,7 +357,8 @@ static void Key_FUNC(KEY_Code_t Key, uint8_t state)
                 break;
 
             case KEY_1:
-                gEeprom.FM_Band++;
+                // The Japanese target uses one fixed 76-95 MHz receive band.
+                gEeprom.FM_Band = 1;
                 gRequestSaveFM = true;
                 break;
 
@@ -611,6 +612,10 @@ void FM_Play(void)
 
 void FM_Start(void)
 {
+#ifdef ENABLE_RX_ONLY
+    gEeprom.FM_Band = 1;
+#endif
+
     gDualWatchActive          = false;
     gFmRadioMode              = true;
     gFM_ScanState             = FM_SCAN_OFF;

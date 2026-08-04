@@ -73,6 +73,9 @@ void SETTINGS_InitEEPROM(void)
 #endif
     gEeprom.CHANNEL_DISPLAY_MODE  = (Data[1] < 4) ? Data[1] : MDF_FREQUENCY;    // 4 instead of 3 - extra display mode
     gEeprom.CROSS_BAND_RX_TX      = (Data[2] < 3) ? Data[2] : CROSS_BAND_OFF;
+#ifdef ENABLE_RX_ONLY
+    gEeprom.CROSS_BAND_RX_TX      = CROSS_BAND_OFF;
+#endif
     gEeprom.BATTERY_SAVE          = (Data[3] < 6) ? Data[3] : 4;
     gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
     gEeprom.BACKLIGHT_TIME        = (Data[5] < 62) ? Data[5] : 12;
@@ -117,6 +120,9 @@ void SETTINGS_InitEEPROM(void)
         EEPROM_ReadBuffer(0x0E88, &fmCfg, 4);
 
         gEeprom.FM_Band = fmCfg.band;
+#ifdef ENABLE_RX_ONLY
+        gEeprom.FM_Band = 1;
+#endif
         //gEeprom.FM_Space = fmCfg.space;
         gEeprom.FM_SelectedFrequency = 
             (fmCfg.selFreq >= BK1080_GetFreqLoLimit(gEeprom.FM_Band) && fmCfg.selFreq <= BK1080_GetFreqHiLimit(gEeprom.FM_Band)) ? 
@@ -390,6 +396,10 @@ void SETTINGS_InitEEPROM(void)
 
         // And set special session settings for actions
         gSetting_set_ptt_session = gSetting_set_ptt;
+#ifdef ENABLE_RX_ONLY
+        gSetting_set_ptt = 0;
+        gSetting_set_ptt_session = 0;
+#endif
         gEeprom.KEY_LOCK_PTT = gSetting_set_lck;
     #endif
 }

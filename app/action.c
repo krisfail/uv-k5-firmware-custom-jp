@@ -495,6 +495,13 @@ void ACTION_Update(void)
 
 void ACTION_RxMode(void)
 {
+#ifdef ENABLE_RX_ONLY
+    gEeprom.DUAL_WATCH = !gEeprom.DUAL_WATCH;
+    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+    ACTION_Update();
+    return;
+#endif
+
     static bool cycle = 0;
 
     switch(cycle) {
@@ -533,11 +540,20 @@ void ACTION_MainOnly(void)
             break;
     }
 
+#ifdef ENABLE_RX_ONLY
+    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+#endif
+
     ACTION_Update();
 }
 
 void ACTION_Ptt(void)
 {
+#ifdef ENABLE_RX_ONLY
+    gSetting_set_ptt_session = 0;
+    return;
+#endif
+
     gSetting_set_ptt_session = !gSetting_set_ptt_session;
 }
 

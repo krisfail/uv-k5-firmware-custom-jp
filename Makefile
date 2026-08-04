@@ -4,14 +4,14 @@
 # 1 = enable
 
 # ---- STOCK QUANSHENG FEATURES ----
-ENABLE_FMRADIO                  ?= 0
+ENABLE_FMRADIO                  ?= 1
 ENABLE_UART                     ?= 1
 ENABLE_AIRCOPY                  ?= 0
 ENABLE_NOAA                     ?= 0
 ENABLE_VOICE                    ?= 0
-ENABLE_VOX                      ?= 1
+ENABLE_VOX                      ?= 0
 ENABLE_ALARM                    ?= 0
-ENABLE_TX1750                   ?= 1
+ENABLE_TX1750                   ?= 0
 ENABLE_PWRON_PASSWORD           ?= 0
 ENABLE_DTMF_CALLING             ?= 0
 ENABLE_FLASHLIGHT               ?= 1
@@ -54,7 +54,7 @@ ENABLE_FEAT_F4HWN               ?= 1
 ENABLE_FEAT_F4HWN_GAME          ?= 0
 ENABLE_FEAT_F4HWN_SCREENSHOT    ?= 0
 ENABLE_FEAT_F4HWN_SPECTRUM      ?= 1
-ENABLE_FEAT_F4HWN_RX_TX_TIMER   ?= 1
+ENABLE_FEAT_F4HWN_RX_TX_TIMER   ?= 0
 ENABLE_FEAT_F4HWN_CHARGING_C    ?= 0
 ENABLE_FEAT_F4HWN_SLEEP         ?= 1
 ENABLE_FEAT_F4HWN_RESUME_STATE  ?= 1
@@ -73,6 +73,21 @@ ENABLE_FEAT_F4HWN_DEBUG         ?= 0
 ENABLE_AM_FIX_SHOW_DATA         ?= 0
 ENABLE_AGC_SHOW_DATA            ?= 0
 ENABLE_UART_RW_BK_REGS          ?= 0
+
+# This Japanese target is receive-only. Keep optional TX-capable paths off
+# even when a caller tries to enable them on the make command line.
+override ENABLE_RX_ONLY                  := 1
+override ENABLE_AIRCOPY                   := 0
+override ENABLE_ALARM                     := 0
+override ENABLE_DTMF_CALLING              := 0
+override ENABLE_EXTRA_UART_CMD            := 0
+override ENABLE_F_CAL_MENU                := 0
+override ENABLE_REGA                      := 0
+override ENABLE_TX1750                    := 0
+override ENABLE_TX_WHEN_AM                := 0
+override ENABLE_UART_RW_BK_REGS           := 0
+override ENABLE_VOX                       := 0
+override ENABLE_FEAT_F4HWN_RX_TX_TIMER   := 0
 
 # ---- COMPILER/LINKER OPTIONS ----
 ENABLE_CLANG                    ?= 0
@@ -311,6 +326,11 @@ CFLAGS += -Wextra
 
 CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 CFLAGS += -DAUTHOR_STRING=\"$(AUTHOR_STRING)\" -DVERSION_STRING=\"$(VERSION_STRING)\"
+
+# This Japanese UV-K5 target is receive-only by design.
+ifeq ($(ENABLE_RX_ONLY),1)
+CFLAGS += -DENABLE_RX_ONLY
+endif
 
 ifeq ($(ENABLE_SPECTRUM),1)
 CFLAGS += -DENABLE_SPECTRUM
@@ -560,6 +580,9 @@ endif
 endif
 
 	$(SIZE) $<
+
+test:
+	$(or $(MY_PYTHON),python) -m unittest discover -s tests -p "test_*.py" -v
 
 debug:
 	/opt/openocd/bin/openocd -c "bindto 0.0.0.0" -f interface/jlink.cfg -f dp32g030.cfg
