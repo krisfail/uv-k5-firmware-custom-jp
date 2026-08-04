@@ -295,6 +295,9 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         self.assertIn("gFontSmallJapanese[code - 0x7F]", helper)
         self.assertIn("font == (const uint8_t *)gFontSmallBold", helper)
         self.assertIn("code <= FONT_CODE_MAX", helper)
+        self.assertIn("const bool is_extended_big = code >= 0x7F;", helper)
+        self.assertIn("(page0 >> 1) | (page1 << 7)", helper)
+        self.assertIn("page1 >> 1", helper)
         small_table = font_source.split(
             "const uint8_t gFontSmallJapanese", 1
         )[1].split("};", 1)[0]

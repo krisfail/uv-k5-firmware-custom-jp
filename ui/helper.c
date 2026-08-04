@@ -108,8 +108,22 @@ void UI_PrintString(const char *pString, uint8_t Start, uint8_t End, uint8_t Lin
         if (code > ' ' && code <= FONT_CODE_MAX)
         {
             const unsigned int index = code - ' ' - 1;
-            memcpy(gFrameBuffer[Line + 0] + ofs, &gFontBig[index][0], 7);
-            memcpy(gFrameBuffer[Line + 1] + ofs, &gFontBig[index][7], 7);
+            const bool is_extended_big = code >= 0x7F;
+            if (is_extended_big) {
+                // The Japanese big glyphs use the same 14-byte area but sit
+                // one pixel lower than the ASCII glyph baseline.
+                for (unsigned int column = 0; column < 7; column++) {
+                    const uint8_t page0 = gFontBig[index][column];
+                    const uint8_t page1 = gFontBig[index][column + 7];
+                    gFrameBuffer[Line + 0][ofs + column] =
+                        (uint8_t)((page0 >> 1) | (page1 << 7));
+                    gFrameBuffer[Line + 1][ofs + column] =
+                        (uint8_t)(page1 >> 1);
+                }
+            } else {
+                memcpy(gFrameBuffer[Line + 0] + ofs, &gFontBig[index][0], 7);
+                memcpy(gFrameBuffer[Line + 1] + ofs, &gFontBig[index][7], 7);
+            }
         }
     }
 }
