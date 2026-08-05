@@ -42,6 +42,8 @@ ENABLE_BLMIN_TMP_OFF            ?= 0
 ENABLE_SCAN_RANGES              ?= 1
 # Select the Japanese firmware identity and compile-time code paths.
 ENABLE_JAPANESE                 ?= 1
+# First-stage protection against rapid gain changes on ordinary FM.
+ENABLE_RX_AGC_GUARD             ?= 1
 
 # ---- CONTRIB MODS ----
 
@@ -169,6 +171,7 @@ OBJS += app/dtmf.o
 ifeq ($(ENABLE_RX_ONLY),1)
 	OBJS += app/rx_band_presets.o
 	OBJS += app/rx_scan_skip.o
+	OBJS += app/rx_feature_state.o
 endif
 ifeq ($(ENABLE_REGA),1)
 	OBJS += app/rega.o
@@ -342,6 +345,9 @@ CFLAGS += -DAUTHOR_STRING=\"$(AUTHOR_STRING)\" -DVERSION_STRING=\"$(VERSION_STRI
 # This Japanese UV-K5 target is receive-only by design.
 ifeq ($(ENABLE_RX_ONLY),1)
 CFLAGS += -DENABLE_RX_ONLY
+endif
+ifeq ($(ENABLE_RX_AGC_GUARD),1)
+CFLAGS += -DENABLE_RX_AGC_GUARD
 endif
 
 ifeq ($(ENABLE_SPECTRUM),1)

@@ -19,6 +19,9 @@
 
 #include "am_fix.h"
 #include "app/dtmf.h"
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
+#endif
 #ifdef ENABLE_FMRADIO
     #include "app/fm.h"
 #endif
@@ -67,6 +70,11 @@ bool RADIO_CheckValidChannel(uint16_t channel, bool checkScanList, uint8_t scanL
 
     if (att.band > BAND7_470MHz)
         return false;
+
+#ifdef ENABLE_RX_ONLY
+    if (!RX_FEATURE_STATE_ChannelMatchesBank(channel))
+        return false;
+#endif
 
     if (!checkScanList || scanList > 4)
         return true;
@@ -148,6 +156,9 @@ void RADIO_InitInfo(VFO_Info_t *pInfo, const uint8_t ChannelSave, const uint32_t
     pInfo->pRX                      = &pInfo->freq_config_RX;
     pInfo->pTX                      = &pInfo->freq_config_TX;
     pInfo->Compander                = 0;  // off
+#ifdef ENABLE_RX_ONLY
+    pInfo->WIDE_PLUS               = true;
+#endif
 
     if (ChannelSave == (FREQ_CHANNEL_FIRST + BAND2_108MHz))
         pInfo->Modulation = MODULATION_AM;
@@ -427,6 +438,10 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
 
     pVfo->Compander = att.compander;
 
+#ifdef ENABLE_RX_ONLY
+    pVfo->WIDE_PLUS = IS_MR_CHANNEL(channel) ? RX_FEATURE_STATE_GetWidePlus(channel) : true;
+#endif
+
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
     if(gRemoveOffset)
     {
@@ -636,9 +651,14 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
         Txp[1],
         Txp[2],
          frequencyBandTable[Band].lower,
-        (frequencyBandTable[Band].lower + frequencyBandTable[Band].upper) / 2,
+         (frequencyBandTable[Band].lower + frequencyBandTable[Band].upper) / 2,
          frequencyBandTable[Band].upper,
-        pInfo->pTX->Frequency);
+         pInfo->pTX->Frequency);
+
+#ifdef ENABLE_RX_ONLY
+    if (RX_FEATURE_STATE_IsAutoSquelch() && pInfo->Modulation == MODULATION_FM)
+        RX_FEATURE_STATE_RequestAutoSquelch();
+#endif
 
     // *******************************
 }
@@ -673,8 +693,20 @@ static void RADIO_SelectCurrentVfo(void)
 
 void RADIO_SelectVfos(void)
 {
+#ifdef ENABLE_RX_ONLY
+    if (RX_FEATURE_STATE_IsSingleVfo())
+    {
+        gEeprom.TX_VFO = 0;
+        gEeprom.RX_VFO = 0;
+        gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
+        gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+    }
+    else
+#endif
+    {
     // if crossband without DW is used then RX_VFO is the opposite to the TX_VFO
     gEeprom.RX_VFO = (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF || gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) ? gEeprom.TX_VFO : !gEeprom.TX_VFO;
+    }
 
     gTxVfo = &gEeprom.VfoInfo[gEeprom.TX_VFO];
     gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_VFO];
@@ -707,13 +739,23 @@ void RADIO_SetupRegisters(bool switchToForeground)
         case BK4819_FILTER_BW_WIDE:
         case BK4819_FILTER_BW_NARROW:
         case BK4819_FILTER_BW_NARROWER:
+            {
+            bool weakNoDifferent = false;
+#ifdef ENABLE_AM_FIX
+            weakNoDifferent = true;
+#endif
+#ifdef ENABLE_RX_ONLY
+            if (Bandwidth == BK4819_FILTER_BW_WIDE)
+                weakNoDifferent = gRxVfo->WIDE_PLUS;
+#endif
             #ifdef ENABLE_AM_FIX
 //              BK4819_SetFilterBandwidth(Bandwidth, gRxVfo->Modulation == MODULATION_AM && gSetting_AM_fix);
-                BK4819_SetFilterBandwidth(Bandwidth, true);
+                BK4819_SetFilterBandwidth(Bandwidth, weakNoDifferent);
             #else
-                BK4819_SetFilterBandwidth(Bandwidth, false);
+                BK4819_SetFilterBandwidth(Bandwidth, weakNoDifferent);
             #endif
             break;
+            }
     }
 
     BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
@@ -751,6 +793,12 @@ void RADIO_SetupRegisters(bool switchToForeground)
         gRxVfo->SquelchOpenRSSIThresh,    gRxVfo->SquelchCloseRSSIThresh,
         gRxVfo->SquelchOpenNoiseThresh,   gRxVfo->SquelchCloseNoiseThresh,
         gRxVfo->SquelchCloseGlitchThresh, gRxVfo->SquelchOpenGlitchThresh);
+
+#ifdef ENABLE_RX_ONLY
+    if (gRxVfo->Modulation == MODULATION_FM &&
+        RX_FEATURE_STATE_ConsumeAutoSquelchRequest())
+        RX_FEATURE_STATE_CalibrateSquelch(gRxVfo);
+#endif
 
     BK4819_PickRXFilterPathBasedOnFrequency(Frequency);
 

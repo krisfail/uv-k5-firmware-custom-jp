@@ -348,7 +348,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         self.assertNotIn("gEeprom.FM_Band++;", fm)
         self.assertIn("gEeprom.FM_Band = 1;", fm)
         self.assertIn("gEeprom.FM_Band = 1;", settings)
-        self.assertIn("*pMax = 1;", menu)
+        self.assertIn("*pMax = 2;", menu)  # MAIN ONLY, DUAL RX, SINGLE
 
 
 if __name__ == "__main__":

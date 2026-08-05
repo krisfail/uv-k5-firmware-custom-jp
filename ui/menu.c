@@ -31,6 +31,9 @@
 #include "../helper/battery.h"
 #include "../misc.h"
 #include "../settings.h"
+#ifdef ENABLE_RX_ONLY
+    #include "../app/rx_feature_state.h"
+#endif
 #ifdef ENABLE_FEAT_F4HWN
     #include "../version.h"
 #endif
@@ -56,6 +59,10 @@ const t_menu_item MenuList[] =
     {"TxOffs",      MENU_OFFSET        }, // was "OFFSET"
 #endif
     {"W/N",         MENU_W_N           },
+#ifdef ENABLE_RX_ONLY
+    {"Bank",        MENU_RX_BANK       },
+    {"BnkSet",      MENU_RX_BANK_SET   },
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     {"Scramb",      MENU_SCR           }, // was "SCR"
 #endif
@@ -245,7 +252,12 @@ const char gSubMenu_SFT_D[][4] =
 
 const char gSubMenu_W_N[][7] =
 {
+#ifdef ENABLE_RX_ONLY
     "WIDE",
+    "WIDE+",
+#else
+    "WIDE",
+#endif
     "NARROW"
 };
 
@@ -265,6 +277,7 @@ const char* const gSubMenu_RXMode[] =
 #ifdef ENABLE_RX_ONLY
     "MAIN\nONLY",
     "DUAL RX",
+    "SINGLE",
 #else
     "MAIN\nONLY",       // TX and RX on main only
     "DUAL RX\nRESPOND", // Watch both and respond
@@ -272,6 +285,18 @@ const char* const gSubMenu_RXMode[] =
     "MAIN TX\nDUAL RX"  // always TX on main, but RX on both
 #endif
 };
+
+#ifdef ENABLE_RX_ONLY
+const char gSubMenu_RXBank[][4] =
+{
+    "ALL", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"
+};
+
+const char gSubMenu_RXBankSet[][5] =
+{
+    "NONE", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"
+};
+#endif
 
 #ifdef ENABLE_VOICE
     const char gSubMenu_VOICE[][4] =
@@ -659,7 +684,10 @@ void UI_DisplayMenu(void)
     switch (UI_MENU_GetCurrentMenuId())
     {
         case MENU_SQL:
-            sprintf(String, "%d", gSubMenuSelection);
+            if (gSubMenuSelection == 10)
+                strcpy(String, "AUTO");
+            else
+                sprintf(String, "%d", gSubMenuSelection);
             break;
 
         case MENU_MIC:
@@ -739,6 +767,16 @@ void UI_DisplayMenu(void)
         case MENU_W_N:
             strcpy(String, gSubMenu_W_N[gSubMenuSelection]);
             break;
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_BANK:
+            strcpy(String, gSubMenu_RXBank[gSubMenuSelection]);
+            break;
+
+        case MENU_RX_BANK_SET:
+            strcpy(String, gSubMenu_RXBankSet[gSubMenuSelection]);
+            break;
+#endif
 
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:

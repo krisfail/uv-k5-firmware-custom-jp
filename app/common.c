@@ -6,6 +6,7 @@
 #include "ui/ui.h"
 #ifdef ENABLE_RX_ONLY
 #include "app/rx_band_presets.h"
+#include "app/rx_feature_state.h"
 #endif
 
 void COMMON_KeypadLockToggle() 
@@ -27,6 +28,10 @@ void COMMON_KeypadLockToggle()
 
 void COMMON_SwitchVFOs()
 {
+#ifdef ENABLE_RX_ONLY
+    if (RX_FEATURE_STATE_IsSingleVfo())
+        return;
+#endif
 #ifdef ENABLE_SCAN_RANGES    
     gScanRangeStart = 0;
 #endif

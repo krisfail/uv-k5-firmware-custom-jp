@@ -38,6 +38,7 @@
 #include "app/menu.h"
 #include "app/scanner.h"
 #ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
     #include "app/rx_scan_skip.h"
 #endif
 #ifdef ENABLE_UART
@@ -1364,6 +1365,10 @@ void APP_TimeSlice10ms(void)
     if (gRxVfo->Modulation == MODULATION_AM) {
         AM_fix_10ms(gEeprom.RX_VFO);
     }
+#endif
+
+#ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_ProcessAgcGuard();
 #endif
 
 #ifdef ENABLE_UART

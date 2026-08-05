@@ -43,7 +43,10 @@
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 #ifdef ENABLE_REGA
-    #include "app/rega.h"
+#include "app/rega.h"
+#endif
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
 #endif
 
 #if defined(ENABLE_FMRADIO)
@@ -496,6 +499,8 @@ void ACTION_Update(void)
 void ACTION_RxMode(void)
 {
 #ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_SetSingleVfo(false);
+    RX_FEATURE_STATE_Save();
     gEeprom.DUAL_WATCH = !gEeprom.DUAL_WATCH;
     gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
     ACTION_Update();
@@ -541,6 +546,8 @@ void ACTION_MainOnly(void)
     }
 
 #ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_SetSingleVfo(false);
+    RX_FEATURE_STATE_Save();
     gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
 #endif
 
@@ -559,6 +566,44 @@ void ACTION_Ptt(void)
 
 void ACTION_Wn(void)
 {
+#ifdef ENABLE_RX_ONLY
+    VFO_Info_t *const pVfo = FUNCTION_IsRx() ? gRxVfo : gTxVfo;
+    if (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
+    {
+        if (pVfo->WIDE_PLUS)
+        {
+            pVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
+            pVfo->WIDE_PLUS = false;
+        }
+        else
+            pVfo->WIDE_PLUS = true;
+    }
+    else
+    {
+        pVfo->CHANNEL_BANDWIDTH = BANDWIDTH_WIDE;
+        pVfo->WIDE_PLUS = false;
+    }
+
+    BK4819_FilterBandwidth_t bandwidth = pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ?
+        BK4819_FILTER_BW_NARROW : BK4819_FILTER_BW_WIDE;
+#ifdef ENABLE_FEAT_F4HWN_NARROWER
+    if (bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
+        bandwidth = BK4819_FILTER_BW_NARROWER;
+#endif
+    bool weakNoDifferent = false;
+#ifdef ENABLE_AM_FIX
+    weakNoDifferent = true;
+#endif
+    if (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
+        weakNoDifferent = pVfo->WIDE_PLUS;
+    BK4819_SetFilterBandwidth(bandwidth, weakNoDifferent);
+    if (IS_MR_CHANNEL(pVfo->CHANNEL_SAVE))
+    {
+        RX_FEATURE_STATE_SetWidePlus(pVfo->CHANNEL_SAVE, pVfo->WIDE_PLUS);
+        RX_FEATURE_STATE_Save();
+    }
+    return;
+#endif
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
         bool narrower = 0;
         if (FUNCTION_IsRx())

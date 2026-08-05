@@ -1304,24 +1304,52 @@ void UI_DisplayMain(void)
 
             if (gSetting_set_gui)
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"W", "W+", "N", "N+"};
+                uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE ?
+                    (vfoInfo->WIDE_PLUS ? 1 : 0) : (uint8_t)(2 + narrower);
+#else
                 const char *bandWidthNames[] = {"W", "N", "N+"};
-                UI_PrintStringSmallNormal(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH + narrower], LCD_WIDTH + 80, 0, line + 1);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
+#endif
+                UI_PrintStringSmallNormal(bandWidthNames[bandWidth], LCD_WIDTH + 80, 0, line + 1);
             }
             else
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"WIDE", "WIDE+", "NAR", "NAR+"};
+                uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE ?
+                    (vfoInfo->WIDE_PLUS ? 1 : 0) : (uint8_t)(2 + narrower);
+#else
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
-                GUI_DisplaySmallest(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH + narrower], 91, line == 0 ? 17 : 49, false, true);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
+#endif
+                GUI_DisplaySmallest(bandWidthNames[bandWidth], 91, line == 0 ? 17 : 49, false, true);
             }
         #else
             if (gSetting_set_gui)
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"W", "W+", "N"};
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE && vfoInfo->WIDE_PLUS ? 1 :
+                    (vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 : 0);
+#else
                 const char *bandWidthNames[] = {"W", "N"};
-                UI_PrintStringSmallNormal(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH], LCD_WIDTH + 80, 0, line + 1);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH;
+#endif
+                UI_PrintStringSmallNormal(bandWidthNames[bandWidth], LCD_WIDTH + 80, 0, line + 1);
             }
             else
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"WIDE", "WIDE+", "NAR"};
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE && vfoInfo->WIDE_PLUS ? 1 :
+                    (vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 : 0);
+#else
                 const char *bandWidthNames[] = {"WIDE", "NAR"};
-                GUI_DisplaySmallest(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH], 91, line == 0 ? 17 : 49, false, true);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH;
+#endif
+                GUI_DisplaySmallest(bandWidthNames[bandWidth], 91, line == 0 ? 17 : 49, false, true);
             }
         #endif
 #else

@@ -6,6 +6,7 @@
 #include "settings.h"
 //#include "debugging.h"
 #ifdef ENABLE_RX_ONLY
+#include "app/rx_feature_state.h"
 #include "app/rx_band_presets.h"
 #include "app/rx_scan_skip.h"
 #endif
@@ -424,6 +425,21 @@ static void NextMemChannelOnce(void)
 static bool NextMemChannel(void)
 {
 #ifdef ENABLE_RX_ONLY
+    if (RX_FEATURE_STATE_IsBankFilterActive())
+    {
+        bool hasChannel = false;
+        for (uint16_t channel = MR_CHANNEL_FIRST; channel <= MR_CHANNEL_LAST; channel++)
+        {
+            if (RADIO_CheckValidChannel(channel, true, gEeprom.SCAN_LIST_DEFAULT))
+            {
+                hasChannel = true;
+                break;
+            }
+        }
+        if (!hasChannel)
+            return false;
+    }
+
     // Priority scan lists can require several passes per memory channel.
     const uint16_t maxAttempts = (uint16_t)((MR_CHANNEL_LAST + 1U) * SCAN_NEXT_NUM);
 
