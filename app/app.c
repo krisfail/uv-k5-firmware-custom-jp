@@ -37,6 +37,9 @@
 #include "app/main.h"
 #include "app/menu.h"
 #include "app/scanner.h"
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_scan_skip.h"
+#endif
 #ifdef ENABLE_UART
     #include "app/uart.h"
 #endif
@@ -2025,6 +2028,10 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         }
     }
 
+#ifdef ENABLE_RX_ONLY
+    const bool wasFKeyPressed = gWasFKeyPressed;
+#endif
+
 #ifdef ENABLE_FEAT_F4HWN // For F + SIDE1 or F + SIDE2
     if (gWasFKeyPressed && (Key == KEY_PTT || Key == KEY_EXIT)) { 
 #else
@@ -2109,6 +2116,26 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         }
 #endif
     }
+#ifdef ENABLE_RX_ONLY
+    else if (Key == KEY_SIDE1 &&
+             !wasFKeyPressed &&
+             gScanStateDir != SCAN_OFF &&
+             gScreenToDisplay == DISPLAY_MAIN &&
+             !bKeyHeld && bKeyPressed) {
+        switch (RX_SCAN_SKIP_Add(gRxVfo->freq_config_RX.Frequency)) {
+            case RX_SCAN_SKIP_ADDED:
+                gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+                break;
+
+            case RX_SCAN_SKIP_DUPLICATE:
+            case RX_SCAN_SKIP_FULL:
+                gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+                break;
+        }
+
+        gUpdateStatus = true;
+    }
+#endif
 #ifdef ENABLE_FEAT_F4HWN // For F + SIDE1 or F + SIDE2
     else if (gWasFKeyPressed && (Key == KEY_SIDE1 || Key == KEY_SIDE2)) {
         ProcessKeysFunctions[gScreenToDisplay](Key, bKeyPressed, bKeyHeld);

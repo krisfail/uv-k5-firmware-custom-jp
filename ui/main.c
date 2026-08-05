@@ -37,6 +37,9 @@
 #include "ui/main.h"
 #include "ui/ui.h"
 #include "audio.h"
+#ifdef ENABLE_RX_ONLY
+#include "app/rx_band_presets.h"
+#endif
 
 #ifdef ENABLE_FEAT_F4HWN
     #include "driver/system.h"
@@ -1510,6 +1513,11 @@ void UI_DisplayMain(void)
     //#ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
     //}
     //#endif
+#endif
+
+#ifdef ENABLE_RX_ONLY
+    if (RX_BAND_PRESETS_IsOpen())
+        RX_BAND_PRESETS_Draw();
 #endif
 
     ST7565_BlitFullScreen();

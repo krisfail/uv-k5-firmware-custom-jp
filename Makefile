@@ -166,6 +166,10 @@ OBJS += app/app.o
 OBJS += app/chFrScanner.o
 OBJS += app/common.o
 OBJS += app/dtmf.o
+ifeq ($(ENABLE_RX_ONLY),1)
+	OBJS += app/rx_band_presets.o
+	OBJS += app/rx_scan_skip.o
+endif
 ifeq ($(ENABLE_REGA),1)
 	OBJS += app/rega.o
 endif

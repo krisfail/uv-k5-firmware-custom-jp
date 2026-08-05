@@ -51,6 +51,31 @@ Anyway, have fun.
 
 メニュー番号を数字キーで入力すると、目的の項目へ直接移動できます。設定画面では`UP`／`DOWN`で値を選び、`M`で確定、`EXIT`で取り消します。詳しいボタン割り当ては[Button functions](https://github.com/armel/uv-k5-firmware-custom/wiki/Button-functions)、メニューの一覧は[Menu](https://github.com/armel/uv-k5-firmware-custom/wiki/Menu)、周波数・チャンネル操作は[Radio operation](https://github.com/armel/uv-k5-firmware-custom/wiki/Radio-operation)を参照してください。
 
+### 受信バンドプリセット
+
+周波数モードで`STAR`を短押しすると、次の8プリセットを選べます。
+
+`AIR VHF`、`AIR UHF`、`TOKUSHO`、`FIRE`、`140 HAM`、`430 HAM`、`MAR SHIP`、`MAR SHORE`
+
+| プリセット | 周波数範囲 | 変調 | 帯域幅 | step |
+| --- | --- | --- | --- | --- |
+| `AIR VHF` | 118.000-137.000 MHz | AM | narrow | 25 kHz |
+| `AIR UHF` | 225.000-400.000 MHz | AM | narrow | 100 kHz |
+| `TOKUSHO` | 422.050-422.300 MHz | FM | narrow | 12.5 kHz |
+| `FIRE` | 466.350-466.550 MHz | FM | narrow | 12.5 kHz |
+| `140 HAM` | 144.000-146.000 MHz | FM | wide | 20 kHz |
+| `430 HAM` | 430.000-440.000 MHz | FM | wide | 20 kHz |
+| `MAR SHIP` | 156.025-157.425 MHz | FM | wide | 25 kHz |
+| `MAR SHORE` | 160.625-162.025 MHz | FM | wide | 25 kHz |
+
+`UP`／`DOWN`で循環選択し、`M`で現在のVFOへ適用、`STAR`で適用後にその範囲をスキャン、`EXIT`でキャンセルします。これは受信専用の操作で、送信は行いません。デュアル受信中、クロスバンド中、メモリーチャンネル表示中、既存の範囲指定中などは開けません。適用した範囲は実行時状態であり、VFO切替または電源再投入で解除されます。
+
+### スキャン中の一時スキップ
+
+周波数スキャンまたはメモリースキャン中に`F1`を短押しすると、現在の周波数を一時的なスキップ対象に追加できます。登録した周波数は以後のスキャン候補から除外され、ステータスバーに登録数が表示されます。最大16件まで登録でき、同じ周波数を再度追加しても登録数は増えません。上限に達した場合は追加されません。
+
+この一覧はRAM上だけで管理され、メモリーや設定には保存されません。電源を切ると消去されますが、スキャンの停止・再開やVFO／メモリーモードの切替では保持されます。受信専用機能のため、この操作を含めて送信は行いません。
+
 ### 日本語メニューの読み方
 
 | 表示 | 意味 |
