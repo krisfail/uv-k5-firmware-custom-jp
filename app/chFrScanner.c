@@ -446,6 +446,13 @@ static bool NextMemChannel(void)
     for (uint16_t attempt = 0; attempt < maxAttempts; ++attempt) {
         NextMemChannelOnce();
 
+#ifdef ENABLE_RX_ONLY
+        // RADIO_FindNextChannel() falls back to channel 0 when no candidate
+        // is found; keep that fallback from escaping the selected bank.
+        if (!RX_FEATURE_STATE_ChannelMatchesBank(gNextMrChannel))
+            continue;
+#endif
+
         if (!RX_SCAN_SKIP_Contains(gRxVfo->freq_config_RX.Frequency))
             return true;
     }

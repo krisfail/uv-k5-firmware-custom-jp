@@ -97,6 +97,20 @@ class ReceiveScanSkipTest(unittest.TestCase):
         self.assertIn("attempt < maxAttempts", scanner_text)
         self.assertIn("static void NextMemChannelOnce(void)", scanner_text)
 
+    def test_memory_scan_rechecks_the_selected_bank_after_each_candidate(self) -> None:
+        scanner_text = (ROOT / "app/chFrScanner.c").read_text(encoding="utf-8")
+
+        next_once = scanner_text.index("NextMemChannelOnce();")
+        bank_check = scanner_text.index(
+            "RX_FEATURE_STATE_ChannelMatchesBank(gNextMrChannel)", next_once
+        )
+        skip_check = scanner_text.index(
+            "RX_SCAN_SKIP_Contains(gRxVfo->freq_config_RX.Frequency)", bank_check
+        )
+
+        self.assertLess(next_once, bank_check)
+        self.assertLess(bank_check, skip_check)
+
     def test_incoming_resume_does_not_relisten_a_skipped_frequency(self) -> None:
         scanner_text = (ROOT / "app/chFrScanner.c").read_text(encoding="utf-8")
         continue_start = scanner_text.index("void CHFRSCANNER_ContinueScanning(void)")
