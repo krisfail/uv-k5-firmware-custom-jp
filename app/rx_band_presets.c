@@ -72,8 +72,12 @@ static void RX_BAND_PRESETS_Apply(const bool startScan)
 
     // This is deliberately runtime-only. Do not set any gRequestSave* flag.
     gTxVfo->freq_config_RX.Frequency = preset->lower;
+    gTxVfo->freq_config_TX.Frequency = preset->lower;
     gTxVfo->Band                     = FREQUENCY_GetBand(preset->lower);
     gTxVfo->Modulation               = (ModulationMode_t)preset->modulation;
+    /* A preset is a complete receive profile.  Do not carry a per-channel
+     * WIDE+ choice from the previous memory channel into a VFO preset. */
+    gTxVfo->WIDE_PLUS                = false;
     gTxVfo->STEP_SETTING              = STEP_12_5kHz;
     for (uint8_t i = 0; i < STEP_N_ELEM; i++) {
         if (gStepFrequencyTable[i] == preset->step) {

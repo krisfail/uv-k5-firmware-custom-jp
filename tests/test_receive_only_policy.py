@@ -111,6 +111,10 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             re.compile(r"^ENABLE_JAPANESE\s*\?=\s*1\s*$", re.MULTILINE),
         )
         self.assertIn("CFLAGS  += -DENABLE_JAPANESE", makefile)
+        self.assertRegex(
+            makefile,
+            re.compile(r"^override ENABLE_SCAN_RANGES\s*:=\s*1$", re.MULTILINE),
+        )
         self.assertIn("AUTHOR_STRING_2 ?= Kris", makefile)
         self.assertIn("VERSION_STRING_2 ?= v4.3J", makefile)
         self.assertIn("EDITION_STRING ?= JP-RX-Only", makefile)

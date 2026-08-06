@@ -81,6 +81,7 @@ ENABLE_UART_RW_BK_REGS          ?= 0
 # This Japanese target is receive-only. Keep optional TX-capable paths off
 # even when a caller tries to enable them on the make command line.
 override ENABLE_RX_ONLY                  := 1
+override ENABLE_SCAN_RANGES              := 1
 override ENABLE_AIRCOPY                   := 0
 override ENABLE_ALARM                     := 0
 override ENABLE_DTMF_CALLING              := 0

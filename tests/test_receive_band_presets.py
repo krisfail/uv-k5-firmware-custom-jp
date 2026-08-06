@@ -99,6 +99,8 @@ class ReceiveBandPresetTest(unittest.TestCase):
         self.assertIn("gScanRangeStart = preset->lower;", source)
         self.assertIn("gScanRangeStop  = preset->upper;", source)
         self.assertIn("gTxVfo->freq_config_RX.Frequency = preset->lower;", source)
+        self.assertIn("gTxVfo->freq_config_TX.Frequency = preset->lower;", source)
+        self.assertIn("gTxVfo->WIDE_PLUS                = false;", source)
         self.assertIn("RADIO_SetModulation(gRxVfo->Modulation);", source)
         self.assertIn("gTxVfo->FrequencyReverse", source)
         self.assertIn('#include "settings.h"', source)
