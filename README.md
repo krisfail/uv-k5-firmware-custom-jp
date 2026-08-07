@@ -4,7 +4,9 @@
 
 # Open re-implementation of the Quansheng UV-K5/K6/5R v2.1.27 firmware
 
-This repository is a fork of [Egzumer custom firmware](https://github.com/egzumer/uv-k5-firmware-custom), who was a merge of [OneOfEleven custom firmware](https://github.com/OneOfEleven/uv-k5-firmware-custom) with [fagci spectrum analizer](https://github.com/fagci/uv-k5-firmware-fagci-mod/tree/refactor) plus my few changes.
+日本語版の案内は[README.ja.md](README.ja.md)、実機操作とビルドコマンドの一覧は[CHEATSHEET.ja.md](CHEATSHEET.ja.md)を参照してください。
+
+This repository is the downstream fork [krisfail/uv-k5-firmware-custom-jp](https://github.com/krisfail/uv-k5-firmware-custom-jp), with [armel/uv-k5-firmware-custom](https://github.com/armel/uv-k5-firmware-custom) as its upstream. The upstream project is itself based on [Egzumer custom firmware](https://github.com/egzumer/uv-k5-firmware-custom), [OneOfEleven custom firmware](https://github.com/OneOfEleven/uv-k5-firmware-custom), and the [fagci spectrum analyzer](https://github.com/fagci/uv-k5-firmware-fagci-mod/tree/refactor).
 
 All is a cloned and customized version of DualTachyon's open firmware found [here](https://github.com/DualTachyon/uv-k5-firmware) ... a cool achievement !
 
@@ -23,6 +25,12 @@ Anyway, have fun.
 > EN - I recommend to backup your eeprom with [k5prog](https://github.com/sq5bpf/k5prog) before playing with alternative firmwares. It's a good reflex to have. 
 >
 > _FR - Je recommande de sauvegarder votre eeprom avec [k5prog](https://github.com/sq5bpf/k5prog) avant de jouer avec des firmwares alternatifs. C'est un bon réflexe à avoir._
+
+## Project status and safety
+
+This is an independent fork and is not an official Quansheng or F4HWN release. Parts of the code analysis, implementation, and documentation were produced with AI assistance and then reviewed against the source, tests, and available hardware results. AI assistance does not replace maintainer review or user testing.
+
+The firmware is provided **as is**, without warranty. The maintainers are not responsible for damage to a radio, loss of EEPROM or calibration data, failed flashing, loss of configuration, or use that violates local radio regulations. Back up the EEPROM and calibration data before flashing, use an image for the exact hardware model, and keep a recovery method available.
 
 ## 日本語・受信専用版（v4.3J / JP-RX-Only）
 
@@ -114,19 +122,35 @@ Anyway, have fun.
 
 ### ビルドと書き込み
 
-ARM GNUツールチェーン（`arm-none-eabi-gcc`）とPythonが必要です。まずホスト側の回帰チェックを実行します。
+ARM GNUツールチェーン（`arm-none-eabi-gcc`）が必要です。Pythonは回帰テストに必須で、`wrx-jp.packed.bin`を作成する場合は`crcmod`も必要です。コマンドはこのリポジトリのルートで実行してください。
 
-```text
+まず回帰チェックを実行します。
+
+```powershell
 make test
 ```
 
-ファームウェアを作成する場合は次を実行します。
+ファームウェアを作成する場合は次を実行します。`-j2`は並列数の指定なので、環境に合わせて変更できます。
 
-```text
-make
+```powershell
+make -j2
 ```
 
-通常は`f4hwn.packed.bin`を使用します。書き込み前にEEPROMをバックアップし、書き込み手順は[Flashing the firmware](https://github.com/armel/uv-k5-firmware-custom/wiki/Flashing-the-firmware)を確認してください。機種差や書き込み環境による失敗を避けるため、対象機種に対応したファイルだけを使用してください。
+生成物は次のとおりです。
+
+- `wrx-jp.bin`: 生のファームウェアイメージ
+- `wrx-jp.packed.bin`: 書き込み用のパック済みイメージ（Pythonと`crcmod`が利用可能な場合のみ生成）
+- `wrx-jp`: ELF形式のデバッグ用ファイル
+
+`make`の途中で`PYTHON NOT FOUND`または`CRCMOD NOT INSTALLED`と表示されても、`wrx-jp.bin`のビルド自体は完了します。パック済みイメージが必要な場合は、先に次を実行してください。
+
+```powershell
+python --version
+python -m pip install crcmod
+make -j2
+```
+
+設定を変えずに作り直す場合は`make clean`を実行してから`make -j2`を実行します。書き込み前にEEPROMをバックアップし、書き込み手順は[Flashing the firmware](https://github.com/armel/uv-k5-firmware-custom/wiki/Flashing-the-firmware)を確認してください。機種差や書き込み環境による失敗を避けるため、対象機種に対応したファイルだけを使用してください。
 
 # Donations
 

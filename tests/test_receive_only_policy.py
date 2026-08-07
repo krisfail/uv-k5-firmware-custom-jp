@@ -103,6 +103,27 @@ def _receive_only_branch(body: str) -> str:
 
 
 class ReceiveOnlyPolicyTest(unittest.TestCase):
+    def test_receive_only_outputs_use_wrx_jp_names(self) -> None:
+        makefile = _read("Makefile")
+        docker_script = _read("compile-with-docker.sh")
+
+        self.assertRegex(
+            makefile,
+            re.compile(r"^\s*TARGET\s*=\s*wrx-jp\s*$", re.MULTILINE),
+        )
+        for variant in (
+            "custom",
+            "standard",
+            "bandscope",
+            "broadcast",
+            "basic",
+            "rescueops",
+            "game",
+        ):
+            with self.subTest(variant=variant):
+                self.assertIn(f"TARGET=uv-k5-{variant}", docker_script)
+                self.assertNotIn(f"TARGET=f4hwn.{variant}", docker_script)
+
     def test_build_defaults_enable_receive_only_mode(self) -> None:
         makefile = _read("Makefile")
 

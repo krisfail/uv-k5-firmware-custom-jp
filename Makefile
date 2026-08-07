@@ -104,7 +104,7 @@ ENABLE_EXPERIMENTAL_CLFAGS      ?= 1
 #############################################################
 
 ifeq ($(ENABLE_FEAT_F4HWN),1)
-	TARGET = f4hwn
+	TARGET = wrx-jp
 else
 	TARGET = firmware
 endif
@@ -238,7 +238,7 @@ OBJS += main.o
 
 ifeq ($(OS), Windows_NT) # windows
     TOP := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-    RM = del /Q
+    RM = cmd /c del /Q
     FixPath = $(subst /,\,$1)
     WHERE = where
     NULL_OUTPUT = nul
