@@ -102,6 +102,10 @@ make -j2
 
 設定を変えずに作り直す場合は、`make clean`の後に`make -j2`を実行します。`make`が`PYTHON NOT FOUND`または`CRCMOD NOT INSTALLED`と表示しても、生の`wrx-jp.bin`までのビルドは完了します。
 
+## CHIRPドライバ
+
+受信メモリーの読み書きには、[wrx-jp CHIRPドライバ](tools/chirp/README.ja.md)を使用します。旧UV-K5では旧K5プロファイルを選び、K1／K5 V3ではPY32プロファイルを選びます。アップロード前に対象機種の全イメージを保存してください。送信設定は扱いません。
+
 ## 書き込み前後
 
 1. EEPROMをバックアップする。
