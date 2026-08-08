@@ -364,18 +364,24 @@ static void NextMemChannelOnce(void)
             */
             // this bit doesn't yet work if the other VFO is a frequency
             case SCAN_NEXT_CHAN_DUAL_WATCH:
-                // dual watch is enabled - include the other VFO in the scan
-//              if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF)
-//              {
-//                  chan = (gEeprom.RX_VFO + 1) & 1u;
-//                  chan = gEeprom.ScreenChannel[chan];
-//                  if (IS_MR_CHANNEL(chan))
-//                  {
-//                      currentScanList = SCAN_NEXT_CHAN_DUAL_WATCH;
-//                      gNextMrChannel   = chan;
-//                      break;
-//                  }
-//              }
+                /* RXExt + TDR=DWR turns the second VFO into a watch target
+                 * during memory scans.  Frequency-mode VFOs are left alone;
+                 * changing the scan representation for them would risk
+                 * losing the user's range when the scan stops. */
+                if (RX_FEATURE_STATE_IsEnabled() &&
+                    gEeprom.DUAL_WATCH != DUAL_WATCH_OFF)
+                {
+                    const uint8_t watchVfo = (gEeprom.RX_VFO + 1u) & 1u;
+                    const uint16_t watchChannel = gEeprom.ScreenChannel[watchVfo];
+                    if (IS_MR_CHANNEL(watchChannel) &&
+                        RADIO_CheckValidChannel(watchChannel, false, 0))
+                    {
+                        currentScanList = SCAN_NEXT_CHAN_DUAL_WATCH;
+                        gNextMrChannel   = watchChannel;
+                        break;
+                    }
+                }
+                [[fallthrough]];
 
             default:
             case SCAN_NEXT_CHAN_MR:

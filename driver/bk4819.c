@@ -267,6 +267,27 @@ void BK4819_SetAGC(bool enable)
     // }
 }
 
+void BK4819_SetAGCFixedIndex(const int8_t index)
+{
+    /* REG_7E encodes 0..3 directly and -1..-4 as 7..4.  Keeping this
+     * conversion in the driver avoids receive policy code touching RF
+     * register layout. */
+    uint8_t encoded;
+    if (index < -4)
+        encoded = 4;
+    else if (index < 0)
+        encoded = (uint8_t)(8 + index);
+    else if (index > 3)
+        encoded = 3;
+    else
+        encoded = (uint8_t)index;
+
+    const uint16_t regVal = BK4819_ReadRegister(BK4819_REG_7E);
+    BK4819_WriteRegister(BK4819_REG_7E,
+        (regVal & ~(1u << 15) & ~(0b111u << 12)) |
+        (1u << 15) | ((uint16_t)encoded << 12));
+}
+
 void BK4819_InitAGC(bool amModulation)
 {
     // REG_10, REG_11, REG_12 REG_13, REG_14

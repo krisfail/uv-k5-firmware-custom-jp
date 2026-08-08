@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "dcs.h"
+#include "driver/bk4819.h"
 #include "frequencies.h"
 
 enum {

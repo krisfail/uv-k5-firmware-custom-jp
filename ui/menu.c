@@ -564,6 +564,21 @@ char    edit_original[17]; // a copy of the text before editing so that we can e
 char    edit[17];
 int     edit_index;
 
+static const char *UI_MENU_GetRxHelp(const int menuId)
+{
+    switch (menuId)
+    {
+        case MENU_SQL:         return "AUTO=measure noise";
+        case MENU_W_N:         return "W+25 W20 N12 N-6";
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:      return "RX features master";
+        case MENU_RX_BANK:     return "scan bank filter";
+        case MENU_RX_BANK_SET: return "set channel bank";
+#endif
+        default:               return NULL;
+    }
+}
+
 void UI_DisplayMenu(void)
 {
     const unsigned int menu_list_width = 6; // max no. of characters on the menu list (left side)
@@ -1420,6 +1435,10 @@ void UI_DisplayMenu(void)
         sprintf(String, "%2d", gSubMenuSelection);
         UI_PrintStringSmallNormal(String, 105, 0, 0);
     }
+
+    const char *rxHelp = UI_MENU_GetRxHelp(UI_MENU_GetCurrentMenuId());
+    if (rxHelp != NULL)
+        UI_PrintStringSmallNormal(rxHelp, 18, 127, 6);
 
     if ((UI_MENU_GetCurrentMenuId() == MENU_RESET    ||
          UI_MENU_GetCurrentMenuId() == MENU_MEM_CH   ||

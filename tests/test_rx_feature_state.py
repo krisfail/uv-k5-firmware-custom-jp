@@ -149,8 +149,24 @@ class ReceiveFeatureStateTest(unittest.TestCase):
         source = _read("app/rx_feature_state.c")
 
         self.assertIn("The radio reconfiguration path owns AGC outside ordinary FM.", source)
-        self.assertNotIn("if (sAgcHold != 0)\n        {\n            BK4819_SetAGC(true);", source)
         self.assertIn("gFmRadioMode", source)
+        self.assertIn("BK4819_SetAGCFixedIndex", source)
+        self.assertIn("rssi >= -58", source)
+        self.assertIn("rssi <= -78", source)
+
+    def test_fm_gain_and_trimmed_squelch_use_driver_seams(self) -> None:
+        state = _read("app/rx_feature_state.c")
+        driver = _read("driver/bk4819.c")
+        header = _read("driver/bk4819.h")
+
+        self.assertIn("BK4819_SetAGCFixedIndex", header)
+        self.assertIn("BK4819_SetAGCFixedIndex", driver)
+        self.assertIn("BK4819_SetAGCFixedIndex(-4)", state)
+        self.assertIn("BK4819_SetAGCFixedIndex(-3)", state)
+        self.assertIn("rssiMin", state)
+        self.assertIn("noiseMax", state)
+        self.assertIn("glitchMin", state)
+        self.assertIn("/ 6u", state)
 
     def test_makefile_compiles_feature_state_only_for_receive_only_target(self) -> None:
         makefile = _read("Makefile")
@@ -166,6 +182,35 @@ class ReceiveFeatureStateTest(unittest.TestCase):
         )
         self.assertIn("ENABLE_RX_AGC_GUARD             ?= 1", makefile)
         self.assertIn("-DENABLE_RX_AGC_GUARD", makefile)
+
+    def test_receive_scan_rechecks_vhf_second_harmonic_candidates(self) -> None:
+        scanner = _read("app/scanner.c")
+
+        self.assertIn("SCANNER_ShouldVerifyVhfSecondHarmonic", scanner)
+        self.assertIn("SCANNER_StartFrequencyVerification", scanner)
+        self.assertIn("SCANNER_HandleFrequencyVerification", scanner)
+        self.assertIn("BK4819_PickRXFilterPathBasedOnFrequency(frequency)", scanner)
+        self.assertIn("scanVerifyFundamentalRssi - harmonicRssi >= margin", scanner)
+
+    def test_f_key_css_scan_is_rejected_outside_fm(self) -> None:
+        main = _read("app/main.c")
+
+        self.assertIn("gRxVfo->Modulation != MODULATION_FM", main)
+        self.assertIn("gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL", main)
+        guard = main.index("gRxVfo->Modulation != MODULATION_FM")
+        start = main.index("SCANNER_Start(true)")
+        self.assertLess(guard, start)
+
+    def test_scan_watch_and_menu_help_are_receive_only_additions(self) -> None:
+        scanner = _read("app/chFrScanner.c")
+        menu = _read("ui/menu.c")
+
+        self.assertIn("RX_FEATURE_STATE_IsEnabled()", scanner)
+        self.assertIn("SCAN_NEXT_CHAN_DUAL_WATCH", scanner)
+        self.assertIn("watchChannel", scanner)
+        self.assertIn("UI_MENU_GetRxHelp", menu)
+        self.assertIn('"AUTO=measure noise"', menu)
+        self.assertIn('"W+25 W20 N12 N-6"', menu)
 
 
 if __name__ == "__main__":
