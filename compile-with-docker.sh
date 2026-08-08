@@ -48,15 +48,6 @@ clean() {
 
 # ------------------ BUILD VARIANTS ------------------
 
-custom() {
-    echo "🔧 Compiling Custom..."
-    docker run -v "$FIRMWARE_DIR:/app/compiled-firmware" "$IMAGE_NAME" /bin/bash -c "\
-        rm -f ./compiled-firmware/* && cd /app && make -s \
-        EDITION_STRING=Custom \
-        TARGET=uv-k5-custom \
-        && cp uv-k5-custom* compiled-firmware/"
-}
-
 standard() {
     echo "📦 Compiling Standard..."
     docker run -v "$FIRMWARE_DIR:/app/compiled-firmware" "$IMAGE_NAME" /bin/bash -c "\
@@ -174,7 +165,6 @@ game() {
 
 case "$1" in
     clean) clean ;;
-    custom) custom ;;
     standard) standard ;;
     bandscope) bandscope ;;
     broadcast) broadcast ;;
@@ -189,7 +179,7 @@ case "$1" in
         game
         ;;
     *)
-        echo "Usage: BASE=alpine:<tag> $0 {clean|custom|standard|bandscope|broadcast|basic|rescueops|game|all}"
+        echo "Usage: BASE=alpine:<tag> $0 {clean|standard|bandscope|broadcast|basic|rescueops|game|all}"
         echo "Examples: BASE=alpine:3.22 … | BASE=alpine:3.21 … | BASE=alpine:3.19 … | BASE=alpine:edge …"
         exit 1
         ;;

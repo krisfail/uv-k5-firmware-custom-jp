@@ -60,6 +60,7 @@ const t_menu_item MenuList[] =
 #endif
     {"W/N",         MENU_W_N           },
 #ifdef ENABLE_RX_ONLY
+    {"RXExt",       MENU_RX_EXT       },
     {"Bank",        MENU_RX_BANK       },
     {"BnkSet",      MENU_RX_BANK_SET   },
 #endif
@@ -767,6 +768,12 @@ void UI_DisplayMenu(void)
         case MENU_W_N:
             strcpy(String, gSubMenu_W_N[gSubMenuSelection]);
             break;
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
+            break;
+#endif
 
 #ifdef ENABLE_RX_ONLY
         case MENU_RX_BANK:

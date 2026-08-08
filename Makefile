@@ -274,7 +274,7 @@ ifeq ($(ENABLE_FEAT_F4HWN),1)
 	# F4HWN uses the _2 fields for the displayed and packed firmware identity.
 	ifeq ($(ENABLE_JAPANESE),1)
 		AUTHOR_STRING_2 ?= Kris
-		VERSION_STRING_2 ?= v4.3J
+		VERSION_STRING_2 ?= v4.3J2
 		EDITION_STRING ?= JP-RX-Only
 	else
 		AUTHOR_STRING_2 ?= F4HWN

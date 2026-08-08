@@ -30,6 +30,47 @@ def _compute_squelch(rssi: int, noise: int, glitch: int) -> tuple[int, ...]:
 
 
 class ReceiveFeatureStateTest(unittest.TestCase):
+    def test_added_receive_features_have_persistent_master_switch_with_legacy_on_default(self) -> None:
+        header = _read("app/rx_feature_state.h")
+        source = _read("app/rx_feature_state.c")
+
+        self.assertIn("RX_FEATURE_STATE_IsEnabled", header)
+        self.assertIn("RX_FEATURE_STATE_SetEnabled", header)
+        self.assertIn("RX_FEATURE_FLAG_ENABLED", source)
+        self.assertIn("#define RX_FEATURE_VERSION           2u", source)
+        self.assertIn("RX_FEATURE_LEGACY_VERSION", source)
+        self.assertIn("sFlags = RX_FEATURE_FLAG_ENABLED", source)
+        self.assertIn("block[2] == RX_FEATURE_LEGACY_VERSION", source)
+
+    def test_master_switch_is_exposed_in_radio_menu_and_resets_active_scan_range(self) -> None:
+        menu_header = _read("ui/menu.h")
+        menu_ui = _read("ui/menu.c")
+        menu = _read("app/menu.c")
+
+        self.assertIn("MENU_RX_EXT", menu_header)
+        self.assertIn('"RXExt"', menu_ui)
+        self.assertIn("MENU_RX_EXT", menu_ui)
+        self.assertIn("case MENU_RX_EXT", menu)
+        self.assertIn("RX_FEATURE_STATE_SetEnabled", menu)
+        self.assertIn("RX_BAND_PRESETS_Reset();", menu)
+        self.assertIn("gScanRangeStart = 0", menu)
+        self.assertIn("gScanRangeStop = 0", menu)
+
+    def test_master_switch_gates_all_added_feature_runtime_seams(self) -> None:
+        state = _read("app/rx_feature_state.c")
+        presets = _read("app/rx_band_presets.c")
+        skips = _read("app/rx_scan_skip.c")
+        radio = _read("radio.c")
+        action = _read("app/action.c")
+        ui = _read("ui/main.c")
+
+        self.assertIn("RX_FEATURE_STATE_IsEnabled()", state)
+        self.assertIn("RX_FEATURE_STATE_IsEnabled()", presets)
+        self.assertIn("RX_FEATURE_STATE_IsEnabled()", skips)
+        self.assertIn("if (!RX_FEATURE_STATE_IsEnabled())", radio)
+        self.assertIn("RX_FEATURE_STATE_IsEnabled()", action)
+        self.assertIn("RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS", ui)
+
     def test_extension_uses_unoccupied_global_page_and_has_crc_contract(self) -> None:
         source = _read("app/rx_feature_state.c")
 

@@ -54,7 +54,7 @@ class ReceiveBandPresetTest(unittest.TestCase):
         self.assertIn("case KEY_EXIT:", presets)
         self.assertIn("case KEY_UP:", presets)
         self.assertIn("case KEY_DOWN:", presets)
-        readme = _read("README.md")
+        readme = _read("README.ja.md")
         markers = (
             "受信バンドプリセット",
             "AIR VHF",

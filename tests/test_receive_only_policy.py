@@ -112,7 +112,6 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             re.compile(r"^\s*TARGET\s*=\s*wrx-jp\s*$", re.MULTILINE),
         )
         for variant in (
-            "custom",
             "standard",
             "bandscope",
             "broadcast",
@@ -137,7 +136,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             re.compile(r"^override ENABLE_SCAN_RANGES\s*:=\s*1$", re.MULTILINE),
         )
         self.assertIn("AUTHOR_STRING_2 ?= Kris", makefile)
-        self.assertIn("VERSION_STRING_2 ?= v4.3J", makefile)
+        self.assertIn("VERSION_STRING_2 ?= v4.3J2", makefile)
         self.assertIn("EDITION_STRING ?= JP-RX-Only", makefile)
         self.assertIn("AUTHOR_STRING_2 ?= F4HWN", makefile)
 
@@ -289,7 +288,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         font_source = _read("font.c")
         helper = _read("ui/helper.c")
         menu = _read("ui/menu.c")
-        readme = _read("README.md")
+        readme = _read("README.ja.md")
 
         self.assertIn("#define FONT_CODE_MAX 0xDF", font_header)
         self.assertRegex(font_header, re.compile(r"gFontBig\[191\]"))
@@ -344,11 +343,11 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             with self.subTest(label=label):
                 self.assertIn(label, menu)
         for marker in (
-            "v4.3J",
+            "v4.3J2",
             "JP-RX-Only",
             "モニター機能に割り当てています",
             "76.0–95.0 MHz",
-            "Flashing-the-firmware",
+            "Flashing the firmware",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, readme)

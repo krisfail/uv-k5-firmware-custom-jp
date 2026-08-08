@@ -22,6 +22,8 @@
 #include "app/dtmf.h"
 #ifdef ENABLE_RX_ONLY
     #include "app/rx_feature_state.h"
+    #include "app/rx_band_presets.h"
+    #include "app/chFrScanner.h"
 #endif
 #include "app/generic.h"
 #include "app/menu.h"
@@ -219,6 +221,9 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             break;
 
 #ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            *pMax = ARRAY_SIZE(gSubMenu_OFF_ON) - 1;
+            break;
         case MENU_RX_BANK:
         case MENU_RX_BANK_SET:
             *pMax = ARRAY_SIZE(gSubMenu_RXBank) - 1;
@@ -583,6 +588,22 @@ void MENU_AcceptSetting(void)
             return;
 
 #ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            RX_FEATURE_STATE_SetEnabled(gSubMenuSelection != 0);
+            if (!RX_FEATURE_STATE_IsEnabled())
+            {
+                RX_BAND_PRESETS_Reset();
+                gScanRangeStart = 0;
+                gScanRangeStop = 0;
+            }
+            RX_FEATURE_STATE_Save();
+            gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+            gFlagResetVfos = true;
+            gFlagReconfigureVfos = true;
+            gUpdateStatus = true;
+            gUpdateDisplay = true;
+            break;
+
         case MENU_RX_BANK:
             RX_FEATURE_STATE_SetSelectedBank(gSubMenuSelection);
             RX_FEATURE_STATE_Save();
@@ -1151,13 +1172,17 @@ void MENU_ShowCurrentSetting(void)
         case MENU_W_N:
 #ifdef ENABLE_RX_ONLY
             gSubMenuSelection = gTxVfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 :
-                (gTxVfo->WIDE_PLUS ? 1 : 0);
+                (RX_FEATURE_STATE_IsEnabled() && gTxVfo->WIDE_PLUS ? 1 : 0);
 #else
             gSubMenuSelection = gTxVfo->CHANNEL_BANDWIDTH;
 #endif
             break;
 
 #ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            gSubMenuSelection = RX_FEATURE_STATE_IsEnabled();
+            break;
+
         case MENU_RX_BANK:
             gSubMenuSelection = RX_FEATURE_STATE_GetSelectedBank();
             break;

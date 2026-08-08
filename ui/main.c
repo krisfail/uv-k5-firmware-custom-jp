@@ -39,6 +39,7 @@
 #include "audio.h"
 #ifdef ENABLE_RX_ONLY
 #include "app/rx_band_presets.h"
+#include "app/rx_feature_state.h"
 #endif
 
 #ifdef ENABLE_FEAT_F4HWN
@@ -1307,7 +1308,7 @@ void UI_DisplayMain(void)
 #ifdef ENABLE_RX_ONLY
                 const char *bandWidthNames[] = {"W", "W+", "N", "N+"};
                 uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE ?
-                    (vfoInfo->WIDE_PLUS ? 1 : 0) : (uint8_t)(2 + narrower);
+                    ((RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS) ? 1 : 0) : (uint8_t)(2 + narrower);
 #else
                 const char *bandWidthNames[] = {"W", "N", "N+"};
                 const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
@@ -1319,7 +1320,7 @@ void UI_DisplayMain(void)
 #ifdef ENABLE_RX_ONLY
                 const char *bandWidthNames[] = {"WIDE", "WIDE+", "NAR", "NAR+"};
                 uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE ?
-                    (vfoInfo->WIDE_PLUS ? 1 : 0) : (uint8_t)(2 + narrower);
+                    ((RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS) ? 1 : 0) : (uint8_t)(2 + narrower);
 #else
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
                 const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
@@ -1331,7 +1332,8 @@ void UI_DisplayMain(void)
             {
 #ifdef ENABLE_RX_ONLY
                 const char *bandWidthNames[] = {"W", "W+", "N"};
-                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE && vfoInfo->WIDE_PLUS ? 1 :
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE &&
+                    RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS ? 1 :
                     (vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 : 0);
 #else
                 const char *bandWidthNames[] = {"W", "N"};
@@ -1343,7 +1345,8 @@ void UI_DisplayMain(void)
             {
 #ifdef ENABLE_RX_ONLY
                 const char *bandWidthNames[] = {"WIDE", "WIDE+", "NAR"};
-                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE && vfoInfo->WIDE_PLUS ? 1 :
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE &&
+                    RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS ? 1 :
                     (vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 : 0);
 #else
                 const char *bandWidthNames[] = {"WIDE", "NAR"};

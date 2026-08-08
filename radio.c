@@ -747,6 +747,8 @@ void RADIO_SetupRegisters(bool switchToForeground)
 #ifdef ENABLE_RX_ONLY
             if (Bandwidth == BK4819_FILTER_BW_WIDE)
                 weakNoDifferent = gRxVfo->WIDE_PLUS;
+            if (!RX_FEATURE_STATE_IsEnabled())
+                weakNoDifferent = false;
 #endif
             #ifdef ENABLE_AM_FIX
 //              BK4819_SetFilterBandwidth(Bandwidth, gRxVfo->Modulation == MODULATION_AM && gSetting_AM_fix);

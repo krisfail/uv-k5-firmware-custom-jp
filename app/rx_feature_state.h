@@ -11,6 +11,8 @@ void RX_FEATURE_STATE_Init(void);
 void RX_FEATURE_STATE_Save(void);
 void RX_FEATURE_STATE_Reset(void);
 
+bool    RX_FEATURE_STATE_IsEnabled(void);
+void    RX_FEATURE_STATE_SetEnabled(bool enabled);
 bool    RX_FEATURE_STATE_IsSingleVfo(void);
 void    RX_FEATURE_STATE_SetSingleVfo(bool enabled);
 uint8_t RX_FEATURE_STATE_GetSelectedBank(void);

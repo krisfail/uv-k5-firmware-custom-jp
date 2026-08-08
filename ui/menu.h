@@ -42,6 +42,7 @@ enum
     MENU_TOT,
     MENU_W_N,
 #ifdef ENABLE_RX_ONLY
+    MENU_RX_EXT,
     MENU_RX_BANK,
     MENU_RX_BANK_SET,
 #endif

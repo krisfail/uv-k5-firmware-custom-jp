@@ -584,6 +584,9 @@ void ACTION_Wn(void)
         pVfo->WIDE_PLUS = false;
     }
 
+    if (!RX_FEATURE_STATE_IsEnabled())
+        pVfo->WIDE_PLUS = false;
+
     BK4819_FilterBandwidth_t bandwidth = pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ?
         BK4819_FILTER_BW_NARROW : BK4819_FILTER_BW_WIDE;
 #ifdef ENABLE_FEAT_F4HWN_NARROWER
@@ -596,6 +599,8 @@ void ACTION_Wn(void)
 #endif
     if (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
         weakNoDifferent = pVfo->WIDE_PLUS;
+    if (!RX_FEATURE_STATE_IsEnabled())
+        weakNoDifferent = false;
     BK4819_SetFilterBandwidth(bandwidth, weakNoDifferent);
     if (IS_MR_CHANNEL(pVfo->CHANNEL_SAVE))
     {
