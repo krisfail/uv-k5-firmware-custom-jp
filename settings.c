@@ -883,7 +883,7 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
             | (pVFO->TX_LOCK << 6)
             | (pVFO->BUSY_CHANNEL_LOCK << 5)
             | (pVFO->OUTPUT_POWER      << 2)
-            | (pVFO->CHANNEL_BANDWIDTH << 1)
+            | ((RADIO_BandwidthIsWide(pVFO->CHANNEL_BANDWIDTH) ? 0u : 1u) << 1)
             | (pVFO->FrequencyReverse  << 0);
         State._8[5] = ((pVFO->DTMF_PTT_ID_TX_MODE & 7u) << 1)
 #ifdef ENABLE_RX_ONLY
@@ -895,7 +895,11 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
         ;
         State._8[6] =  pVFO->STEP_SETTING;
 #ifdef ENABLE_FEAT_F4HWN
+#ifdef ENABLE_RX_ONLY
+        State._8[7] = RADIO_BANDWIDTH_EXT_MARKER | (pVFO->CHANNEL_BANDWIDTH & 3u);
+#else
         State._8[7] =  0;
+#endif
 #else
         State._8[7] =  pVFO->SCRAMBLING_TYPE;
 #endif

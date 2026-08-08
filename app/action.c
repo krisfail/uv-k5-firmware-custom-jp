@@ -568,45 +568,12 @@ void ACTION_Wn(void)
 {
 #ifdef ENABLE_RX_ONLY
     VFO_Info_t *const pVfo = FUNCTION_IsRx() ? gRxVfo : gTxVfo;
-    if (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
-    {
-        if (pVfo->WIDE_PLUS)
-        {
-            pVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
-            pVfo->WIDE_PLUS = false;
-        }
-        else
-            pVfo->WIDE_PLUS = true;
-    }
-    else
-    {
-        pVfo->CHANNEL_BANDWIDTH = BANDWIDTH_WIDE;
-        pVfo->WIDE_PLUS = false;
-    }
-
-    if (!RX_FEATURE_STATE_IsEnabled())
-        pVfo->WIDE_PLUS = false;
-
-    BK4819_FilterBandwidth_t bandwidth = pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ?
-        BK4819_FILTER_BW_NARROW : BK4819_FILTER_BW_WIDE;
-#ifdef ENABLE_FEAT_F4HWN_NARROWER
-    if (bandwidth == BK4819_FILTER_BW_NARROW && gSetting_set_nfm == 1)
-        bandwidth = BK4819_FILTER_BW_NARROWER;
-#endif
-    bool weakNoDifferent = false;
-#ifdef ENABLE_AM_FIX
-    weakNoDifferent = true;
-#endif
-    if (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE)
-        weakNoDifferent = pVfo->WIDE_PLUS;
-    if (!RX_FEATURE_STATE_IsEnabled())
-        weakNoDifferent = false;
-    BK4819_SetFilterBandwidth(bandwidth, weakNoDifferent);
-    if (IS_MR_CHANNEL(pVfo->CHANNEL_SAVE))
-    {
-        RX_FEATURE_STATE_SetWidePlus(pVfo->CHANNEL_SAVE, pVfo->WIDE_PLUS);
-        RX_FEATURE_STATE_Save();
-    }
+    pVfo->CHANNEL_BANDWIDTH = RADIO_NextBandwidth(pVfo->CHANNEL_BANDWIDTH);
+    pVfo->WIDE_PLUS = pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE_PLUS;
+    BK4819_SetFilterBandwidth(
+        RADIO_BandwidthToFilter(pVfo->CHANNEL_BANDWIDTH),
+        RADIO_BandwidthUsesWidePlusFilter(pVfo->CHANNEL_BANDWIDTH));
+    gRequestSaveChannel = 1;
     return;
 #endif
     #ifdef ENABLE_FEAT_F4HWN_NARROWER

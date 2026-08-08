@@ -67,9 +67,8 @@ class ReceiveFeatureStateTest(unittest.TestCase):
         self.assertIn("RX_FEATURE_STATE_IsEnabled()", state)
         self.assertIn("RX_FEATURE_STATE_IsEnabled()", presets)
         self.assertIn("RX_FEATURE_STATE_IsEnabled()", skips)
-        self.assertIn("if (!RX_FEATURE_STATE_IsEnabled())", radio)
-        self.assertIn("RX_FEATURE_STATE_IsEnabled()", action)
-        self.assertIn("RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS", ui)
+        self.assertIn("RADIO_BandwidthToFilter", action)
+        self.assertNotIn("RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS", ui)
 
     def test_extension_uses_unoccupied_global_page_and_has_crc_contract(self) -> None:
         source = _read("app/rx_feature_state.c")
@@ -98,23 +97,24 @@ class ReceiveFeatureStateTest(unittest.TestCase):
         self.assertIn("static uint8_t sChannelBank[MR_CHANNEL_LAST + 1u]", source)
         self.assertEqual((200 + 7) // 8, 25)
 
-    def test_wide_plus_is_distinct_from_legacy_one_bit_bandwidth(self) -> None:
+    def test_receive_bandwidth_has_four_explicit_modes_and_extended_storage(self) -> None:
         radio = _read("radio.c")
         settings = _read("settings.c")
         menu = _read("app/menu.c")
         ui = _read("ui/main.c")
+        frequencies = _read("frequencies.c")
 
         self.assertIn("bool           WIDE_PLUS;", _read("radio.h"))
-        self.assertIn("RX_FEATURE_STATE_GetWidePlus(channel)", radio)
+        self.assertIn("RADIO_BandwidthToFilter", radio)
         self.assertIn("RX_FEATURE_STATE_SetWidePlus(Channel, pVFO->WIDE_PLUS)", settings)
         self.assertIn("RX_FEATURE_STATE_GetChannelBank(Channel)", settings)
-        self.assertIn('"WIDE+"', _read("ui/menu.c"))
-        self.assertIn("gTxVfo->WIDE_PLUS = gSubMenuSelection == 1", menu)
-        self.assertIn("vfoInfo->WIDE_PLUS", ui)
-        self.assertRegex(
-            radio,
-            re.compile(r"Bandwidth == BK4819_FILTER_BW_WIDE\)\s*\n\s*weakNoDifferent = gRxVfo->WIDE_PLUS"),
-        )
+        self.assertIn('"W+"', _read("ui/menu.c"))
+        self.assertIn('"N-"', _read("ui/menu.c"))
+        self.assertIn("RADIO_BandwidthFromMenuIndex", menu)
+        self.assertIn("RADIO_BandwidthToMenuIndex", ui)
+        self.assertIn("RADIO_BANDWIDTH_EXT_MARKER", settings)
+        self.assertIn("[STEP_6_25kHz]  = 625", frequencies)
+        self.assertIn("[STEP_20kHz]    = 2000", frequencies)
 
     def test_squelch_policy_keeps_open_and_close_hysteresis(self) -> None:
         for values in ((40, 80, 90), (250, 127, 255), (0, 0, 0)):

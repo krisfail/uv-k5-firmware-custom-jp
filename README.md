@@ -1,6 +1,6 @@
 # UV-K5 Japanese receive-only firmware
 
-[日本語版README](README.ja.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md)
+[日本語版README](README.ja.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [CHIRP driver](tools/chirp/README.ja.md) | [Technical feature details](docs/FEATURES_TECHNICAL.ja.md)
 
 This repository is the downstream fork [krisfail/uv-k5-firmware-custom-jp](https://github.com/krisfail/uv-k5-firmware-custom-jp), with [armel/uv-k5-firmware-custom](https://github.com/armel/uv-k5-firmware-custom) as its upstream. The upstream work builds on [Egzumer custom firmware](https://github.com/egzumer/uv-k5-firmware-custom), [OneOfEleven custom firmware](https://github.com/OneOfEleven/uv-k5-firmware-custom), the [fagci spectrum analyzer](https://github.com/fagci/uv-k5-firmware-fagci-mod/tree/refactor), and the original open firmware by [DualTachyon](https://github.com/DualTachyon/uv-k5-firmware).
 
@@ -17,11 +17,11 @@ The firmware is provided **as is**, without warranty. The maintainers are not re
 - Japanese menu labels and Japanese glyphs in the large and small display paths.
 - Receive-only operation: TX paths and TX-related menus are removed, and PTT operates as monitor control.
 - Domestic FM broadcast reception limited to `76.0–95.0 MHz`.
-- Receive band presets, `WIDE`/`WIDE+`/`NARROW`, `MAIN ONLY`/`DUAL RX`/`SINGLE`, memory banks, automatic squelch, AGC protection, and temporary scan skipping.
+- Receive band presets, `W+`/`W`/`N`/`N-` bandwidths (25/20/12.5/6.25 kHz), `MAIN ONLY`/`DUAL RX`/`SINGLE`, memory banks, automatic squelch, AGC protection, and temporary scan skipping.
 - The `RXExt` radio menu item enables or disables those added receive features as a group; it defaults to enabled.
 - The Japanese font data is based on the work in [rainy-knight/uv-k5-jp](https://github.com/rainy-knight/uv-k5-jp).
 
-The detailed operation guide is in [README.ja.md](README.ja.md). The button and build command quick reference is in [CHEATSHEET.ja.md](CHEATSHEET.ja.md).
+The detailed operation guide is in [README.ja.md](README.ja.md). The button and build command quick reference is in [CHEATSHEET.ja.md](CHEATSHEET.ja.md). Technical implementation details are in [docs/FEATURES_TECHNICAL.ja.md](docs/FEATURES_TECHNICAL.ja.md). CHIRP-specific memory-map and upload guidance is in [tools/chirp/README.ja.md](tools/chirp/README.ja.md); legal attribution remains in `tools/chirp/NOTICE.md` and `tools/chirp/LICENSE.txt`.
 
 ## Upstream feature summary
 
@@ -51,6 +51,10 @@ make -j2
 
 Back up the radio before flashing. The upstream [Flashing the firmware](https://github.com/armel/uv-k5-firmware-custom/wiki/Flashing-the-firmware) page describes the general procedure; use only an image for the exact radio model.
 
+## CHIRP driver
+
+Copy `tools/chirp/wrx_jp.py` into the CHIRP driver directory and select `UV-K5 (wrx-jp RX-only)` for this legacy DP32G030 radio. The same module contains a separate UV-K1 / UV-K5 V3 profile; do not use that profile for the legacy UV-K5. The driver is RX-only and its upload whitelist excludes calibration data. Read the [CHIRP guide](tools/chirp/README.ja.md) before writing.
+
 ## Other references
 
 - [armel/uv-k5-firmware-custom Wiki](https://github.com/armel/uv-k5-firmware-custom/wiki)
@@ -73,6 +77,7 @@ Many thanks to:
 - [Egzumer](https://github.com/egzumer)
 - [OneOfEleven](https://github.com/OneOfEleven)
 - [DualTachyon](https://github.com/DualTachyon)
+- UV-K5-RX-JP: receive-only and wideband receiver feature ideas were used as a partial reference.
 - [Mikhail / fagci](https://github.com/fagci)
 - [Andrej](https://github.com/Tunas1337)
 - [Manuel](https://github.com/manujedi)

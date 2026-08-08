@@ -29,9 +29,71 @@ enum {
 };
 
 enum {
-    BANDWIDTH_WIDE = 0,
-    BANDWIDTH_NARROW
+    /* RX-only profiles.  Keep WIDE/NARROW at 0/1 for the stock byte-4
+     * encoding; the extended mode is stored separately in byte 7. */
+    BANDWIDTH_WIDE = 0,       // W 20 kHz
+    BANDWIDTH_NARROW,         // N 12.5 kHz
+    BANDWIDTH_NARROWER,       // N- 6.25 kHz
+    BANDWIDTH_WIDE_PLUS       // W+ 25 kHz
 };
+
+#define RADIO_BANDWIDTH_EXT_MARKER_MASK 0xC0u
+#define RADIO_BANDWIDTH_EXT_MARKER      0x80u
+
+static inline bool RADIO_BandwidthIsWide(const uint8_t bandwidth)
+{
+    return bandwidth == BANDWIDTH_WIDE || bandwidth == BANDWIDTH_WIDE_PLUS;
+}
+
+static inline BK4819_FilterBandwidth_t RADIO_BandwidthToFilter(const uint8_t bandwidth)
+{
+    switch (bandwidth)
+    {
+        case BANDWIDTH_NARROW:
+            return BK4819_FILTER_BW_NARROW;
+        case BANDWIDTH_NARROWER:
+            return BK4819_FILTER_BW_NARROWER;
+        default:
+            return BK4819_FILTER_BW_WIDE;
+    }
+}
+
+static inline bool RADIO_BandwidthUsesWidePlusFilter(const uint8_t bandwidth)
+{
+    return bandwidth == BANDWIDTH_WIDE_PLUS;
+}
+
+static inline uint8_t RADIO_BandwidthFromMenuIndex(const uint8_t index)
+{
+    static const uint8_t modes[] = {
+        BANDWIDTH_WIDE_PLUS, BANDWIDTH_WIDE,
+        BANDWIDTH_NARROW, BANDWIDTH_NARROWER
+    };
+    return index < (sizeof(modes) / sizeof(modes[0])) ? modes[index] : BANDWIDTH_WIDE;
+}
+
+static inline uint8_t RADIO_BandwidthToMenuIndex(const uint8_t bandwidth)
+{
+    switch (bandwidth)
+    {
+        case BANDWIDTH_WIDE_PLUS: return 0;
+        case BANDWIDTH_WIDE:      return 1;
+        case BANDWIDTH_NARROW:    return 2;
+        case BANDWIDTH_NARROWER:  return 3;
+        default:                  return 1;
+    }
+}
+
+static inline uint8_t RADIO_NextBandwidth(const uint8_t bandwidth)
+{
+    switch (bandwidth)
+    {
+        case BANDWIDTH_WIDE_PLUS: return BANDWIDTH_WIDE;
+        case BANDWIDTH_WIDE:      return BANDWIDTH_NARROW;
+        case BANDWIDTH_NARROW:    return BANDWIDTH_NARROWER;
+        default:                  return BANDWIDTH_WIDE_PLUS;
+    }
+}
 
 enum PTT_ID_t {
     PTT_ID_OFF = 0,    // OFF

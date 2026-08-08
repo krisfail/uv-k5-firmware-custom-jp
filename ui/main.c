@@ -1296,19 +1296,20 @@ void UI_DisplayMain(void)
 
 #if ENABLE_FEAT_F4HWN
         #ifdef ENABLE_FEAT_F4HWN_NARROWER
+#ifndef ENABLE_RX_ONLY
             bool narrower = 0;
 
             if(vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW && gSetting_set_nfm == 1)
             {
                 narrower = 1;
             }
+#endif
 
             if (gSetting_set_gui)
             {
 #ifdef ENABLE_RX_ONLY
-                const char *bandWidthNames[] = {"W", "W+", "N", "N+"};
-                uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE ?
-                    ((RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS) ? 1 : 0) : (uint8_t)(2 + narrower);
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
 #else
                 const char *bandWidthNames[] = {"W", "N", "N+"};
                 const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
@@ -1318,9 +1319,8 @@ void UI_DisplayMain(void)
             else
             {
 #ifdef ENABLE_RX_ONLY
-                const char *bandWidthNames[] = {"WIDE", "WIDE+", "NAR", "NAR+"};
-                uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE ?
-                    ((RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS) ? 1 : 0) : (uint8_t)(2 + narrower);
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
 #else
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
                 const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
@@ -1331,10 +1331,8 @@ void UI_DisplayMain(void)
             if (gSetting_set_gui)
             {
 #ifdef ENABLE_RX_ONLY
-                const char *bandWidthNames[] = {"W", "W+", "N"};
-                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE &&
-                    RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS ? 1 :
-                    (vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 : 0);
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
 #else
                 const char *bandWidthNames[] = {"W", "N"};
                 const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH;
@@ -1344,10 +1342,8 @@ void UI_DisplayMain(void)
             else
             {
 #ifdef ENABLE_RX_ONLY
-                const char *bandWidthNames[] = {"WIDE", "WIDE+", "NAR"};
-                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE &&
-                    RX_FEATURE_STATE_IsEnabled() && vfoInfo->WIDE_PLUS ? 1 :
-                    (vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW ? 2 : 0);
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
 #else
                 const char *bandWidthNames[] = {"WIDE", "NAR"};
                 const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH;

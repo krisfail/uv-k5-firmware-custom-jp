@@ -254,12 +254,14 @@ const char gSubMenu_SFT_D[][4] =
 const char gSubMenu_W_N[][7] =
 {
 #ifdef ENABLE_RX_ONLY
-    "WIDE",
-    "WIDE+",
+    "W+",
+    "W",
+    "N",
+    "N-"
 #else
     "WIDE",
-#endif
     "NARROW"
+#endif
 };
 
 const char gSubMenu_OFF_ON[][4] =
