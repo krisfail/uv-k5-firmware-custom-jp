@@ -1,4 +1,4 @@
-# リポジトリ作業指針
+# AIエージェント向け作業指針
 
 ## 対象範囲
 
@@ -14,24 +14,13 @@
 - calibration は利用者設定ではない。通常のCHIRPアップロード範囲に校正領域を含めず、書き込み範囲を拡張する場合はバックアップ、復元、境界テストを先に用意する。UART経路には同じ拒否条件がないため、CHIRPの保護をファームウェア全体の絶対保護と解釈しない。
 - 実機未検証の機能は、README・テスト結果・リリース説明で未検証と明示する。静的テストやホストテストを実機動作の代わりに扱わない。
 
-## 文書と検証の正規入口
+## AIエージェントの作業手順
 
-- `README.ja.md`: 利用者向けの正規ガイド。対象、制約、ビルド、書き込み、基本操作を記載する。
-- `README.md`: 英語の短縮版。上流の機能一覧を複製せず、必要なリンクと謝辞を残す。
-- `CHEATSHEET.ja.md`: 日常操作・ビルド・書き込み前チェックだけを載せる早見表。READMEの説明を再掲しない。
-- `tools/chirp/README.ja.md`: CHIRPの機種選択、読み書き範囲、calibration保護、制約を記載する。`NOTICE.md` と `LICENSE.txt` は帰属表示・ライセンス文書として統合しない。
-- `docs/FEATURES_TECHNICAL.ja.md`: 実装者向けの新機能、EEPROM配置、フォント、検証範囲の技術詳細。利用者向けREADMEへ同じ説明を複製しない。
-- `k5viewer/README.md`: K5Viewer固有の使用説明。ファームウェア全体の説明を複製せず、必要に応じてルートREADMEへリンクする。
-- `tests/`: ホスト側の回帰テスト。新しい受信機能や設定保存形式を変更したら、対応するテストを追加または更新する。
-
-## 開発・確認
-
-```powershell
-python -m unittest discover -s tests -p "test_*.py" -v
-make -j2
-```
-
-パック済みイメージを作るにはPythonと `crcmod` が必要である。実機書き込み前には、対象個体のEEPROMと校正データを退避する。
+- 作業開始時に未コミット変更、対象ソース、テスト、適用される指示を確認する。既存の変更をリセット・上書きしない。
+- 機能変更では、影響範囲を確認してから実装し、対応するホストテスト、[DEVELOPMENT.md](DEVELOPMENT.md)、[docs/FEATURES_TECHNICAL.ja.md](docs/FEATURES_TECHNICAL.ja.md)を必要な範囲で更新する。
+- 利用者向け文書は[README.md](README.md)、[README.ja.md](README.ja.md)、[CHEATSHEET.ja.md](CHEATSHEET.ja.md)の役割を混ぜない。詳細な開発情報は`DEVELOPMENT.md`へ置く。
+- 実機未検証の結果を、ビルド成功やホストテスト成功だけで保証済みと記載しない。
+- 変更後は、可能な範囲でテスト、ビルド、`git diff --check`を実行し、未検証範囲を報告する。具体的なコマンドと出力物は`DEVELOPMENT.md`を参照する。
 
 ## 変更・履歴の扱い
 

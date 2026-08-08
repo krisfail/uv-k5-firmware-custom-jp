@@ -50,7 +50,7 @@ enum
     MENU_SCR,
 #endif
     MENU_BCL,
-#ifdef ENABLE_FEAT_F4HWN
+#if defined(ENABLE_FEAT_F4HWN) && !defined(ENABLE_RX_ONLY)
     MENU_TX_LOCK, 
 #endif
     MENU_MEM_CH,
@@ -242,6 +242,7 @@ extern char              edit[17];
 extern int               edit_index;
 
 void UI_DisplayMenu(void);
+void UI_MENU_TimeSlice500ms(void);
 int UI_MENU_GetCurrentMenuId();
 uint8_t UI_MENU_GetMenuIdx(uint8_t id);
 

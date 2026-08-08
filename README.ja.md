@@ -1,6 +1,6 @@
 # UV-K5 日本語・受信専用ファームウェア
 
-[英語版README](README.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [CHIRPドライバ](tools/chirp/README.ja.md) | [新機能の技術詳細](docs/FEATURES_TECHNICAL.ja.md)
+[英語版README](README.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [開発者向けガイド](DEVELOPMENT.md) | [CHIRPドライバ](tools/chirp/README.ja.md) | [新機能の技術詳細](docs/FEATURES_TECHNICAL.ja.md) | [bitmap/font atlas](docs/BITMAP_ATLAS.ja.md)
 
 ## このリポジトリの位置づけ
 
@@ -21,6 +21,7 @@
 - `README.ja.md`: 対象、制約、安全上の注意、ビルド、書き込み、基本操作をまとめた正規ガイド
 - `README.md`: 英語の短縮版。上流の説明は要約し、詳細は上流Wikiへリンク
 - `CHEATSHEET.ja.md`: 日常操作、ビルドコマンド、書き込み前チェックだけを確認する早見表
+- `DEVELOPMENT.md`: 開発者向けのソース構成、変更境界、検証、atlas生成、リリース取り扱い
 - `tools/chirp/README.ja.md`: CHIRPの機種選択、読み書き範囲、校正領域の扱い
 - `tools/chirp/NOTICE.md` / `LICENSE.txt`: CHIRPドライバの帰属表示とライセンス
 - `docs/FEATURES_TECHNICAL.ja.md`: 新機能の実装、EEPROM配置、フォント、検証範囲の技術資料
@@ -35,7 +36,7 @@
 - PTTは送信開始ではなく、モニター機能に割り当てています。
 - 送信系のメニューと送信処理を除外しています。
 - FM放送受信は`76.0–95.0 MHz`に固定しています。
-- 表示名は`Kris v4.3J2`、エディション名は`JP-RX-Only`です。
+- 表示名は`Kris v4.3J4`、エディション名は`JP-RX-Only`です。
 - 日本語フォントは大きい文字と小さい文字の両方で使用します。表示幅の制約から、一部のメニュー名は短い英字表記を残しています。
 
 対象機種の個体差、書き込み方法、受信環境による動作差があります。書き込み前に必ずEEPROMをバックアップし、異なる機種向けのイメージを使用しないでください。

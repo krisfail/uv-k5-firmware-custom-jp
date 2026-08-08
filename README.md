@@ -1,6 +1,6 @@
 # UV-K5 Japanese receive-only firmware
 
-[日本語版README](README.ja.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [CHIRP driver](tools/chirp/README.ja.md) | [Technical feature details](docs/FEATURES_TECHNICAL.ja.md)
+[日本語版README](README.ja.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [Developer guide](DEVELOPMENT.md) | [CHIRP driver](tools/chirp/README.ja.md) | [Technical feature details](docs/FEATURES_TECHNICAL.ja.md)
 
 This repository is the downstream fork [krisfail/uv-k5-firmware-custom-jp](https://github.com/krisfail/uv-k5-firmware-custom-jp), with [armel/uv-k5-firmware-custom](https://github.com/armel/uv-k5-firmware-custom) as its upstream. The upstream work builds on [Egzumer custom firmware](https://github.com/egzumer/uv-k5-firmware-custom), [OneOfEleven custom firmware](https://github.com/OneOfEleven/uv-k5-firmware-custom), the [fagci spectrum analyzer](https://github.com/fagci/uv-k5-firmware-fagci-mod/tree/refactor), and the original open firmware by [DualTachyon](https://github.com/DualTachyon/uv-k5-firmware).
 
@@ -23,6 +23,8 @@ The firmware is provided **as is**, without warranty. The maintainers are not re
 
 The detailed operation guide is in [README.ja.md](README.ja.md). The button and build command quick reference is in [CHEATSHEET.ja.md](CHEATSHEET.ja.md). Technical implementation details are in [docs/FEATURES_TECHNICAL.ja.md](docs/FEATURES_TECHNICAL.ja.md). CHIRP-specific memory-map and upload guidance is in [tools/chirp/README.ja.md](tools/chirp/README.ja.md); legal attribution remains in `tools/chirp/NOTICE.md` and `tools/chirp/LICENSE.txt`.
 
+Development-specific source layout, change boundaries, atlas generation, validation, and release handling are collected in [DEVELOPMENT.md](DEVELOPMENT.md). `README.md` intentionally keeps only the general usage and build information needed to get started.
+
 ## Upstream feature summary
 
 This fork retains selected upstream improvements in the radio driver, scanning, spectrum and display handling, audio controls, memory operation, and user interface. The complete upstream feature catalogue is intentionally not duplicated here; see the [armel project Wiki](https://github.com/armel/uv-k5-firmware-custom/wiki) and the [upstream repository](https://github.com/armel/uv-k5-firmware-custom) for background and general documentation.
@@ -41,6 +43,8 @@ The build produces:
 - `wrx-jp.bin`: raw firmware image.
 - `wrx-jp.packed.bin`: packed image, when Python and `crcmod` are available.
 - `wrx-jp`: ELF image for debugging.
+
+Run the host regression tests separately with `make test` or the equivalent Python command in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 To rebuild from a clean state:
 

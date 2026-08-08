@@ -1,6 +1,6 @@
 # UV-K5 日本語・受信専用版 cheatsheet
 
-[日本語版README](README.ja.md) | [英語版README](README.md) | [CHIRPドライバ](tools/chirp/README.ja.md)
+[日本語版README](README.ja.md) | [英語版README](README.md) | [開発者向けガイド](DEVELOPMENT.md) | [CHIRPドライバ](tools/chirp/README.ja.md)
 
 注意事項、forkの関係、AI支援開発、免責、バックアップの要件は[README.ja.md](README.ja.md)を確認してください。
 
@@ -9,7 +9,7 @@
 ## まず確認
 
 - 用途: 日本国内向けの受信専用運用
-- 版: `Kris v4.3J2` / `JP-RX-Only`
+- 版: `Kris v4.3J4` / `JP-RX-Only`
 - `PTT`: モニター。送信しない
 - FM放送: `76.0–95.0 MHz`
 

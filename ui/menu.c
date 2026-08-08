@@ -77,9 +77,9 @@ const t_menu_item MenuList[] =
     {"TXLock",      MENU_TX_LOCK       }, 
 #endif
 #endif
-    {{'C', 'H', 0x84, 0x85, '1'}, MENU_S_ADD1}, // CH追加1
-    {{'C', 'H', 0x84, 0x85, '2'}, MENU_S_ADD2}, // CH追加2
-    {{'C', 'H', 0x84, 0x85, '3'}, MENU_S_ADD3}, // CH追加3
+    {"SCAN1",       MENU_S_ADD1}, // scan list 1 membership
+    {"SCAN2",       MENU_S_ADD2}, // scan list 2 membership
+    {"SCAN3",       MENU_S_ADD3}, // scan list 3 membership
     {{'C', 'H', 0x86, 0x87}, MENU_MEM_CH}, // CH保存
     {{'C', 'H', 0x88, 0x89}, MENU_DEL_CH}, // CH削除
     {{'C', 'H', 0x8A}, MENU_MEM_NAME}, // CH名
@@ -570,6 +570,10 @@ static const char *UI_MENU_GetRxHelp(const int menuId)
     {
         case MENU_SQL:         return "AUTO=measure noise";
         case MENU_W_N:         return "W+25 W20 N12 N-6";
+        case MENU_S_ADD1:      return "scan list 1 member";
+        case MENU_S_ADD2:      return "scan list 2 member";
+        case MENU_S_ADD3:      return "scan list 3 member";
+        case MENU_R_CTCS:      return "normal/reverse tone";
 #ifdef ENABLE_RX_ONLY
         case MENU_RX_EXT:      return "RX features master";
         case MENU_RX_BANK:     return "scan bank filter";
@@ -577,6 +581,57 @@ static const char *UI_MENU_GetRxHelp(const int menuId)
 #endif
         default:               return NULL;
     }
+}
+
+#define UI_MENU_HELP_WIDTH 15u
+
+static uint8_t gMenuHelpOffset;
+
+static void UI_MENU_DrawRxHelp(const char *help)
+{
+    char visible[UI_MENU_HELP_WIDTH + 1u] = {0};
+    const size_t length = strlen(help);
+
+    // The menu number occupies the left edge of this row.  Clear the rest
+    // before drawing so an old, longer help line cannot remain on screen.
+    memset(gFrameBuffer[6] + 18, 0, LCD_WIDTH - 18);
+
+    if (length > UI_MENU_HELP_WIDTH)
+    {
+        const size_t cycle = length + 1u; // one blank separator
+        for (size_t i = 0; i < UI_MENU_HELP_WIDTH; i++)
+        {
+            const size_t position = (gMenuHelpOffset + i) % cycle;
+            visible[i] = (position < length) ? help[position] : ' ';
+        }
+    }
+    else
+    {
+        strncpy(visible, help, UI_MENU_HELP_WIDTH);
+    }
+
+    // End == 0 disables centering and keeps the 15-character window inside
+    // the 128-pixel display (18 + 15 * 7 <= 127).
+    UI_PrintStringSmallNormal(visible, 18, 0, 6);
+}
+
+void UI_MENU_TimeSlice500ms(void)
+{
+    const char *help = UI_MENU_GetRxHelp(UI_MENU_GetCurrentMenuId());
+    const size_t length = (help == NULL) ? 0u : strlen(help);
+
+    if (gScreenToDisplay != DISPLAY_MENU || length <= UI_MENU_HELP_WIDTH)
+    {
+        if (gMenuHelpOffset != 0)
+        {
+            gMenuHelpOffset = 0;
+            gUpdateDisplay = true;
+        }
+        return;
+    }
+
+    gMenuHelpOffset = (gMenuHelpOffset + 1u) % (length + 1u);
+    gUpdateDisplay = true;
 }
 
 void UI_DisplayMenu(void)
@@ -755,8 +810,10 @@ void UI_DisplayMenu(void)
         {
             if (gSubMenuSelection == 0)
                 strcpy(String, gSubMenu_OFF_ON[0]);
-            else
+            else if (gSubMenuSelection <= (int32_t)ARRAY_SIZE(CTCSS_Options))
                 sprintf(String, "%u.%uHz", CTCSS_Options[gSubMenuSelection - 1] / 10, CTCSS_Options[gSubMenuSelection - 1] % 10);
+            else
+                sprintf(String, "R%u.%uHz", CTCSS_Options[gSubMenuSelection - ARRAY_SIZE(CTCSS_Options) - 1] / 10, CTCSS_Options[gSubMenuSelection - ARRAY_SIZE(CTCSS_Options) - 1] % 10);
             break;
         }
 
@@ -1219,6 +1276,7 @@ void UI_DisplayMenu(void)
             #endif
             break;
 
+#ifndef ENABLE_RX_ONLY
         case MENU_TX_LOCK:
             if(TX_freq_check(gEeprom.VfoInfo[gEeprom.TX_VFO].pTX->Frequency) == 0)
             {
@@ -1229,6 +1287,7 @@ void UI_DisplayMenu(void)
                 strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
             }
             break;
+#endif
 
         case MENU_SET_LCK:
             strcpy(String, gSubMenu_SET_LCK[gSubMenuSelection]);
@@ -1438,7 +1497,7 @@ void UI_DisplayMenu(void)
 
     const char *rxHelp = UI_MENU_GetRxHelp(UI_MENU_GetCurrentMenuId());
     if (rxHelp != NULL)
-        UI_PrintStringSmallNormal(rxHelp, 18, 127, 6);
+        UI_MENU_DrawRxHelp(rxHelp);
 
     if ((UI_MENU_GetCurrentMenuId() == MENU_RESET    ||
          UI_MENU_GetCurrentMenuId() == MENU_MEM_CH   ||

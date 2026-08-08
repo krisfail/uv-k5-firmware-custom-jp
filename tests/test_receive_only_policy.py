@@ -136,7 +136,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             re.compile(r"^override ENABLE_SCAN_RANGES\s*:=\s*1$", re.MULTILINE),
         )
         self.assertIn("AUTHOR_STRING_2 ?= Kris", makefile)
-        self.assertIn("VERSION_STRING_2 ?= v4.3J2", makefile)
+        self.assertIn("VERSION_STRING_2 ?= v4.3J4", makefile)
         self.assertIn("EDITION_STRING ?= JP-RX-Only", makefile)
         self.assertIn("AUTHOR_STRING_2 ?= F4HWN", makefile)
 
@@ -343,7 +343,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             with self.subTest(label=label):
                 self.assertIn(label, menu)
         for marker in (
-            "v4.3J2",
+            "v4.3J4",
             "JP-RX-Only",
             "モニター機能に割り当てています",
             "76.0–95.0 MHz",
