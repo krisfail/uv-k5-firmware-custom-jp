@@ -72,11 +72,6 @@ const t_menu_item MenuList[] =
 #endif
     {"Compnd",      MENU_COMPAND       },
     {{0x82, 0x83}, MENU_AM}, // 変調
-#ifdef ENABLE_FEAT_F4HWN
-#ifndef ENABLE_RX_ONLY
-    {"TXLock",      MENU_TX_LOCK       }, 
-#endif
-#endif
     {"SCAN1",       MENU_S_ADD1}, // scan list 1 membership
     {"SCAN2",       MENU_S_ADD2}, // scan list 2 membership
     {"SCAN3",       MENU_S_ADD3}, // scan list 3 membership
@@ -1275,19 +1270,6 @@ void UI_DisplayMenu(void)
                 strcpy(String, gSubMenu_NA);
             #endif
             break;
-
-#ifndef ENABLE_RX_ONLY
-        case MENU_TX_LOCK:
-            if(TX_freq_check(gEeprom.VfoInfo[gEeprom.TX_VFO].pTX->Frequency) == 0)
-            {
-                strcpy(String, "Inside\nF Lock\nPlan");
-            }
-            else
-            {
-                strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
-            }
-            break;
-#endif
 
         case MENU_SET_LCK:
             strcpy(String, gSubMenu_SET_LCK[gSubMenuSelection]);

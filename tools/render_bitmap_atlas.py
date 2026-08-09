@@ -56,6 +56,10 @@ class Array:
         """Return (columns, pages) for fonts stored as two OLED pages."""
         if self.name in {"gFontBig", "gFontBigJapanese"} and self.element_width == 14:
             return (7, 2)
+        if self.name == "gFontJapaneseExtraLarge" and self.element_width == 20:
+            return (10, 2)
+        if self.name == "gFontSmallJapanese" and self.element_width == 6:
+            return (6, 1)
         if self.name == "gFontBigDigits" and self.element_width and self.element_width % 2 == 0:
             return (self.element_width // 2, 2)
         return None
@@ -174,8 +178,9 @@ def comment_label(comment: str) -> str | None:
         return None
     candidate = parts[-1]
     candidate = re.sub(r"^0[xX][0-9A-Fa-f]+\s*", "", candidate)
-    candidate = re.sub(r"^['\"](.+)['\"]$", r"\1", candidate)
     candidate = candidate.strip(" ,")
+    if len(candidate) >= 2 and candidate[0] in "'\"" and candidate[-1] == candidate[0]:
+        candidate = candidate[1:-1].strip()
     return candidate or None
 
 
@@ -188,10 +193,13 @@ def parse_glyph_annotations(name: str, initializer: str, element_width: int | No
         entries = re.findall(r"\{([^{}]*)\}([^\r\n]*)", initializer)
         glyphs = []
         for index, (body, comment) in enumerate(entries):
+            code = 0x21 + index
             values = parse_values(body)
             if len(values) != element_width:
-                continue
-            code = 0x21 + index
+                raise ValueError(
+                    f"{name} glyph 0x{code:02X} has {len(values)} bytes; "
+                    f"expected {element_width}"
+                )
             label = comment_label(comment) or SHARED_GLYPH_LABELS.get(code)
             if label is None and 0x20 < code < 0x7F:
                 label = chr(code)
@@ -199,35 +207,70 @@ def parse_glyph_annotations(name: str, initializer: str, element_width: int | No
                            "occupied": any(values), "source_index": index})
         return glyphs
 
+    if name == "gFontJapaneseExtraLarge" and element_width == 20:
+        # K5 cannot afford a complete 0x80..0xDF table here.  Each compact
+        # source row therefore carries its firmware code in the comment.
+        entries = re.findall(r"\{([^{}]*)\}([^\r\n]*)", initializer)
+        glyphs = []
+        seen_codes: set[int] = set()
+        for source_index, (body, comment) in enumerate(entries):
+            code_match = re.search(r"0[xX]([0-9A-Fa-f]{2})", comment)
+            if code_match is None:
+                raise ValueError(f"{name} glyph {source_index} has no code annotation")
+            code = int(code_match.group(1), 16)
+            if code in seen_codes:
+                raise ValueError(f"duplicate glyph code 0x{code:02X} in {name}")
+            seen_codes.add(code)
+            values = parse_values(body)
+            if len(values) != element_width:
+                raise ValueError(
+                    f"{name} glyph 0x{code:02X} has {len(values)} bytes; "
+                    f"expected {element_width}"
+                )
+            glyphs.append({"code": code, "label": comment_label(comment),
+                           "bytes": values, "occupied": any(values),
+                           "source_index": source_index})
+        return glyphs
+
     if name not in {"gFontBigJapanese", "gFontSmallJapanese"}:
         return None
 
-    entries = re.findall(r"\[([^\]]+)\]\s*=\s*\{([^{}]*)\}([^\r\n]*)", initializer)
-    parsed = []
+    entries = re.findall(r"\[([^\]]+)\]\s*=\s*\{([^{}]*)\}([ \t]*,?[ \t]*(?://[^\r\n]*)?)", initializer)
+    parsed: dict[int, tuple[str | None, bytes]] = {}
     max_code = 0x7F
     for expression, body, comment in entries:
         index = eval_integer_expression(expression)
         if index is None:
-            continue
+            raise ValueError(f"cannot evaluate glyph index {expression!r} in {name}")
         code = index + 0x7F
+        if code in parsed:
+            raise ValueError(f"duplicate glyph code 0x{code:02X} in {name}")
         values = parse_values(body)
         if element_width is not None:
-            values = values[:element_width] + bytes(max(0, element_width - len(values)))
-        parsed.append((code, comment_label(comment) or SHARED_GLYPH_LABELS.get(code), values))
+            if len(values) != element_width:
+                raise ValueError(
+                    f"{name} glyph 0x{code:02X} has {len(values)} bytes; "
+                    f"expected {element_width}"
+                )
+        parsed[code] = (comment_label(comment) or SHARED_GLYPH_LABELS.get(code), values)
         max_code = max(max_code, code)
     if not parsed:
         return []
     glyphs = []
     for code in range(0x80, max_code + 1):
-        entry = next((item for item in parsed if item[0] == code), None)
-        values = entry[2] if entry is not None else bytes(element_width or 0)
-        glyphs.append({"code": code, "label": entry[1] if entry else None,
+        entry = parsed.get(code)
+        values = entry[1] if entry is not None else bytes(element_width or 0)
+        glyphs.append({"code": code, "label": entry[0] if entry else None,
                        "bytes": values, "occupied": any(values),
                        "source_index": code - 0x80})
     return glyphs
 
 
-def parse_source(path: Path, occurrences: dict[str, int]) -> list[Array]:
+def parse_source(
+    path: Path,
+    occurrences: dict[str, int],
+    source_label: str | None = None,
+) -> list[Array]:
     original = path.read_text(encoding="utf-8")
     text = remove_if_zero_blocks(original)
     arrays: list[Array] = []
@@ -238,16 +281,24 @@ def parse_source(path: Path, occurrences: dict[str, int]) -> list[Array]:
         dimensions = re.findall(r"\[([^\]]*)\]", match.group("dims"))
         width = eval_dimension(dimensions[-1]) if dimensions else None
         initializer = text[opening + 1 : closing]
+        glyphs = parse_glyph_annotations(match.group("name"), initializer, width)
+        if glyphs:
+            # Designated initializers omit blank slots from the source text;
+            # the inventory must still represent the complete runtime table.
+            values = b"".join(bytes(glyph["bytes"]) for glyph in glyphs)
         occurrences[match.group("name")] = occurrences.get(match.group("name"), 0) + 1
         arrays.append(
             Array(
                 name=match.group("name"),
-                source=path.as_posix(),
+                # Never put the analyst's absolute filesystem path in an
+                # inspectable artifact.  The CLI supplies a repo-relative
+                # label; direct callers fall back to the filename only.
+                source=source_label or path.name,
                 dimensions=dimensions,
                 values=values,
                 occurrence=occurrences[match.group("name")],
                 element_width=width,
-                glyphs=parse_glyph_annotations(match.group("name"), initializer, width),
+                glyphs=glyphs,
             )
         )
     return arrays
@@ -291,8 +342,11 @@ def draw_glyph_atlas(lines: list[str], array: Array, x: int, y: int, scale: int)
         annotation = array.glyphs[index] if array.glyphs else None
         code_label = f"0x{annotation['code']:02X}" if annotation else f"g{index:03d}"
         if annotation and annotation.get("label"):
-            code_label += f" {annotation['label']}"
-        lines.append(f'<text x="{cell_x}" y="{cell_y - 5}" class="sub">{code_label}</text>')
+            # Keep provenance in the inventory while keeping the compact SVG
+            # cell label short enough not to overlap its neighbours.
+            display_label = annotation["label"].split(" (", 1)[0]
+            code_label += f" {display_label}"
+        lines.append(f'<text x="{cell_x}" y="{cell_y - 5}" class="sub">{xml_text(code_label)}</text>')
         for page in range(pages):
             page_data = glyph_data[index][page * glyph_width : (page + 1) * glyph_width]
             for column, value in enumerate(page_data):
@@ -342,17 +396,65 @@ def make_svg(arrays: list[Array], scale: int, wrap: int) -> str:
     return "\n".join(lines) + "\n"
 
 
+def markdown_cell(value: object) -> str:
+    """Escape a value for a Markdown table cell."""
+    return str(value).replace("|", "\\|").replace("\n", " ")
+
+
+def make_markdown_inventory(arrays: list[Array]) -> str:
+    """Return a compact, human-readable font inventory."""
+    lines = [
+        "# フォント一覧",
+        "",
+        "この一覧は `tools/render_bitmap_atlas.py` が現行Cソースから生成したものです。",
+        "コードはファームウェア内部の1バイトコードであり、Unicodeコードポイントではありません。",
+        "字形の元バイト列は同じ出力ディレクトリの `bitmap_atlas_inventory.json` を参照してください。",
+        "",
+        "## 配列サマリー",
+        "",
+        "| 配列 | 種類 | サイズ(byte) | 要素幅 | グリフ数 | 使用中 |",
+        "| --- | --- | ---: | ---: | ---: | ---: |",
+    ]
+    for array in arrays:
+        glyph_count = len(array.glyphs) if array.glyphs is not None else "—"
+        occupied = sum(glyph["occupied"] for glyph in array.glyphs) if array.glyphs else "—"
+        lines.append(
+            f"| `{markdown_cell(array.label)}` | {array.category} | {len(array.values)} | "
+            f"{array.element_width or '—'} | {glyph_count} | {occupied} |"
+        )
+
+    for array in arrays:
+        if array.glyphs is None:
+            continue
+        lines.extend([
+            "",
+            f"## `{markdown_cell(array.label)}`",
+            "",
+            "| コード | 注釈 | 状態 | ソース順 |",
+            "| --- | --- | --- | ---: |",
+        ])
+        for glyph in array.glyphs:
+            label = glyph["label"] or "未注釈"
+            state = "使用中" if glyph["occupied"] else "空き"
+            lines.append(
+                f"| `0x{glyph['code']:02X}` | {markdown_cell(label)} | {state} | "
+                f"{glyph['source_index']} |"
+            )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", action="append", type=Path, help="C source containing uint8_t arrays (repeatable)")
     parser.add_argument("--out", type=Path, default=Path("bitmap-atlas"), help="output directory")
+    parser.add_argument("--markdown-out", type=Path, help="write a human-readable Markdown font inventory")
     parser.add_argument("--scale", type=int, default=6, help="pixels per bitmap cell in SVG")
     parser.add_argument("--wrap", type=int, default=64, help="maximum columns per rendered strip")
     args = parser.parse_args()
     if args.scale < 2 or args.wrap < 1:
         raise SystemExit("--scale must be >= 2 and --wrap must be >= 1")
 
-    root = Path.cwd()
+    root = Path.cwd().resolve()
     sources = args.source
     if not sources:
         candidates = [root / "bitmaps.c", root / "font.c", root / "App" / "bitmaps.c", root / "App" / "font.c", root / "App" / "japanese_font.c"]
@@ -361,12 +463,20 @@ def main() -> None:
         raise SystemExit("no source supplied and no bitmaps.c/App/bitmaps.c found")
 
     arrays: list[Array] = []
+    display_sources: list[str] = []
     occurrences: dict[str, int] = {}
-    for source in sources:
-        source = source.resolve()
+    for source_arg in sources:
+        source = source_arg.resolve()
         if not source.is_file():
             raise SystemExit(f"source not found: {source}")
-        arrays.extend(parse_source(source, occurrences))
+        try:
+            source_label = source.relative_to(root).as_posix()
+        except ValueError:
+            # A source outside the repository is still useful for local
+            # inspection, but its parent directories are not public metadata.
+            source_label = source.name
+        display_sources.append(source_label)
+        arrays.extend(parse_source(source, occurrences, source_label))
     if not arrays:
         raise SystemExit("no uint8_t arrays found")
 
@@ -383,7 +493,7 @@ def main() -> None:
             "element_width": array.element_width,
             "size": len(array.values),
             "bytes_hex": array.values.hex(" "),
-            "layout": "glyph-2page" if layout else "column-strip",
+            "layout": f"glyph-{layout[1]}page" if layout else "column-strip",
         }
         if layout:
             record["glyph_width"] = layout[0]
@@ -398,13 +508,19 @@ def main() -> None:
             ]
         inventory.append(record)
     (out / "bitmap_atlas_inventory.json").write_text(
-        json.dumps({"sources": [str(path.resolve()) for path in sources], "arrays": inventory}, ensure_ascii=False, indent=2) + "\n",
+        json.dumps({"sources": display_sources, "arrays": inventory}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     (out / "bitmap_atlas.svg").write_text(make_svg(arrays, args.scale, args.wrap), encoding="utf-8")
+    if args.markdown_out:
+        markdown_out = args.markdown_out.resolve()
+        markdown_out.parent.mkdir(parents=True, exist_ok=True)
+        markdown_out.write_text(make_markdown_inventory(arrays), encoding="utf-8")
     print(f"arrays: {len(arrays)}")
     print(f"svg: {out / 'bitmap_atlas.svg'}")
     print(f"inventory: {out / 'bitmap_atlas_inventory.json'}")
+    if args.markdown_out:
+        print(f"markdown: {args.markdown_out.resolve()}")
 
 
 if __name__ == "__main__":

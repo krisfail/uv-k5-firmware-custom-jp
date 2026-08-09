@@ -50,6 +50,32 @@ static void RX_BAND_PRESETS_Beep(const bool error)
     gBeepToPlay = error ? BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL : BEEP_1KHZ_60MS_OPTIONAL;
 }
 
+static void RX_BAND_PRESETS_Reject(const char *message)
+{
+    RX_BAND_PRESETS_Beep(true);
+    UI_DisplayUnavailable(message);
+    /* The popup is already on the LCD; do not immediately replace it with
+     * the normal main-screen redraw requested by the rejected action. */
+    gUpdateDisplay = false;
+}
+
+static const char *RX_BAND_PRESETS_OpenError(void)
+{
+    if (!RX_FEATURE_STATE_IsEnabled())
+        return "RXExt OFF";
+    if (!IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE))
+        return "VFO ONLY";
+    if (gScanStateDir != SCAN_OFF || gScanRangeStart != 0)
+        return "SCAN ACTIVE";
+    if (gTxVfo->FrequencyReverse)
+        return "REV ON";
+    if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF)
+        return "DUAL RX ON";
+    if (gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF)
+        return "CROSS ON";
+    return NULL;
+}
+
 static void RX_BAND_PRESETS_Close(void)
 {
     sOpen = false;
@@ -65,8 +91,10 @@ static void RX_BAND_PRESETS_Apply(const bool startScan)
         gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF ||
         !RX_BAND_PRESETS_IsValid(preset))
     {
-        RX_BAND_PRESETS_Beep(true);
         RX_BAND_PRESETS_Close();
+        RX_BAND_PRESETS_Reject(!RX_FEATURE_STATE_IsEnabled() ? "RXExt OFF" :
+            gEeprom.DUAL_WATCH != DUAL_WATCH_OFF ? "DUAL RX ON" :
+            gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF ? "CROSS ON" : "PRESET ERROR");
         return;
     }
 
@@ -108,15 +136,10 @@ static void RX_BAND_PRESETS_Apply(const bool startScan)
 
 void RX_BAND_PRESETS_Open(void)
 {
-    if (!RX_FEATURE_STATE_IsEnabled() ||
-        !IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE) ||
-        gScanStateDir != SCAN_OFF ||
-        gScanRangeStart != 0 ||
-        gTxVfo->FrequencyReverse ||
-        gEeprom.DUAL_WATCH != DUAL_WATCH_OFF ||
-        gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF)
+    const char *error = RX_BAND_PRESETS_OpenError();
+    if (error != NULL)
     {
-        RX_BAND_PRESETS_Beep(true);
+        RX_BAND_PRESETS_Reject(error);
         return;
     }
 

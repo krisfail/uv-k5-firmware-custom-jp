@@ -43,6 +43,7 @@
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
+#include "ui/helper.h"
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 #ifdef ENABLE_RX_ONLY
@@ -834,6 +835,7 @@ static void MAIN_Key_STAR(bool bKeyPressed, bool bKeyHeld)
         // that cannot produce a tone result.
         if (gRxVfo->Modulation != MODULATION_FM) {
             gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+            UI_DisplayUnavailable("FM ONLY");
             gUpdateStatus = true;
             return;
         }

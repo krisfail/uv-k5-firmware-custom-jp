@@ -136,49 +136,33 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             re.compile(r"^override ENABLE_SCAN_RANGES\s*:=\s*1$", re.MULTILINE),
         )
         self.assertIn("AUTHOR_STRING_2 ?= Kris", makefile)
-        self.assertIn("VERSION_STRING_2 ?= v4.3J4", makefile)
+        self.assertIn("VERSION_STRING_2 ?= v4.3J5", makefile)
         self.assertIn("EDITION_STRING ?= JP-RX-Only", makefile)
         self.assertIn("AUTHOR_STRING_2 ?= F4HWN", makefile)
 
-        for option in ("ENABLE_VOX", "ENABLE_TX1750"):
+        for option in ("ENABLE_VOX",):
             self.assertRegex(
                 makefile,
                 re.compile(rf"^{option}\s*\?=\s*0\s*$", re.MULTILINE),
             )
-        self.assertRegex(
-            makefile,
-            re.compile(
-                r"^ENABLE_FEAT_F4HWN_RX_TX_TIMER\s*\?=\s*0\s*$",
-                re.MULTILINE,
-            ),
-        )
         self.assertIn("CFLAGS += -DENABLE_RX_ONLY", makefile)
 
-    def test_receive_only_target_forces_tx_capable_options_off(self) -> None:
+    def test_receive_only_target_does_not_build_rf_transmit_modules(self) -> None:
         makefile = _read("Makefile")
-        options = (
-            "ENABLE_AIRCOPY",
-            "ENABLE_ALARM",
-            "ENABLE_DTMF_CALLING",
-            "ENABLE_EXTRA_UART_CMD",
-            "ENABLE_F_CAL_MENU",
-            "ENABLE_REGA",
+        for source in ("app/aircopy.o", "ui/aircopy.o", "app/rega.o"):
+            self.assertNotIn(source, makefile)
+        for definition in (
             "ENABLE_TX1750",
             "ENABLE_TX_WHEN_AM",
-            "ENABLE_UART_RW_BK_REGS",
-            "ENABLE_VOX",
+            "ENABLE_REDUCE_LOW_MID_TX_POWER",
+            "ENABLE_REGA",
             "ENABLE_FEAT_F4HWN_RX_TX_TIMER",
-        )
-
-        for option in options:
-            with self.subTest(option=option):
-                self.assertRegex(
-                    makefile,
-                    re.compile(
-                        rf"^override\s+{option}\s*:=\s*0\s*$",
-                        re.MULTILINE,
-                    ),
-                )
+        ):
+            self.assertNotRegex(
+                makefile,
+                re.compile(rf"^\s*(?:override\s+)?{definition}\s", re.MULTILINE),
+            )
+        self.assertIn("source guards remain for upstream provenance", makefile)
 
     def test_ptt_toggles_monitor_only_on_press(self) -> None:
         body = _function_body(_read("app/generic.c"), "GENERIC_Key_PTT")
@@ -319,9 +303,8 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         self.assertIn("gFontSmallJapanese[code - 0x7F]", helper)
         self.assertIn("font == (const uint8_t *)gFontSmallBold", helper)
         self.assertIn("code <= FONT_CODE_MAX", helper)
-        self.assertIn("const bool is_extended_big = code >= 0x7F;", helper)
-        self.assertIn("(page0 >> 1) | (page1 << 7)", helper)
-        self.assertIn("page1 >> 1", helper)
+        self.assertIn("source tables already contain display rows", helper)
+        self.assertNotIn("FONT_BIG_JAPANESE_RENDER_SHIFT", helper)
         small_table = font_source.split(
             "const uint8_t gFontSmallJapanese", 1
         )[1].split("};", 1)[0]
@@ -343,7 +326,7 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             with self.subTest(label=label):
                 self.assertIn(label, menu)
         for marker in (
-            "v4.3J4",
+            "v4.3J5",
             "JP-RX-Only",
             "モニター機能に割り当てています",
             "76.0–95.0 MHz",

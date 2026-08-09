@@ -990,6 +990,8 @@ void RADIO_SetupRegisters(bool switchToForeground)
 void RADIO_SetTxParameters(void)
 {
 #ifdef ENABLE_RX_ONLY
+    RADIO_SetVfoState(VFO_STATE_TX_DISABLE);
+    AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
     return;
 #endif
 
@@ -1147,7 +1149,10 @@ void RADIO_SetVfoState(VfoState_t State)
 void RADIO_PrepareTX(void)
 {
 #ifdef ENABLE_RX_ONLY
+    /* Keep the last TX safety gate visible even if a future caller reaches
+     * this function without going through the normal RX-only key path. */
     RADIO_SetVfoState(VFO_STATE_TX_DISABLE);
+    AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
     return;
 #endif
 

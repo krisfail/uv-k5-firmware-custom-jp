@@ -6,12 +6,10 @@
 # ---- STOCK QUANSHENG FEATURES ----
 ENABLE_FMRADIO                  ?= 1
 ENABLE_UART                     ?= 1
-ENABLE_AIRCOPY                  ?= 0
 ENABLE_NOAA                     ?= 0
 ENABLE_VOICE                    ?= 0
 ENABLE_VOX                      ?= 0
 ENABLE_ALARM                    ?= 0
-ENABLE_TX1750                   ?= 0
 ENABLE_PWRON_PASSWORD           ?= 0
 ENABLE_DTMF_CALLING             ?= 0
 ENABLE_FLASHLIGHT               ?= 1
@@ -23,7 +21,6 @@ ENABLE_SMALL_BOLD               ?= 1
 ENABLE_CUSTOM_MENU_LAYOUT       ?= 1
 ENABLE_KEEP_MEM_NAME            ?= 1
 ENABLE_WIDE_RX                  ?= 1
-ENABLE_TX_WHEN_AM               ?= 0
 ENABLE_F_CAL_MENU               ?= 0
 ENABLE_CTCSS_TAIL_PHASE_SHIFT   ?= 0
 ENABLE_BOOT_BEEPS               ?= 0
@@ -36,7 +33,6 @@ ENABLE_FASTER_CHANNEL_SCAN      ?= 1
 ENABLE_RSSI_BAR                 ?= 1
 ENABLE_AUDIO_BAR                ?= 1
 ENABLE_COPY_CHAN_TO_VFO         ?= 1
-ENABLE_REDUCE_LOW_MID_TX_POWER  ?= 0
 ENABLE_BYP_RAW_DEMODULATORS     ?= 0
 ENABLE_BLMIN_TMP_OFF            ?= 0
 ENABLE_SCAN_RANGES              ?= 1
@@ -47,8 +43,6 @@ ENABLE_RX_AGC_GUARD             ?= 1
 
 # ---- CONTRIB MODS ----
 
-# Thank you @markusb
-ENABLE_REGA                     ?= 0
 # Thank you @reppad
 ENABLE_EXTRA_UART_CMD           ?= 0
 
@@ -58,7 +52,6 @@ ENABLE_FEAT_F4HWN               ?= 1
 ENABLE_FEAT_F4HWN_GAME          ?= 0
 ENABLE_FEAT_F4HWN_SCREENSHOT    ?= 0
 ENABLE_FEAT_F4HWN_SPECTRUM      ?= 1
-ENABLE_FEAT_F4HWN_RX_TX_TIMER   ?= 0
 ENABLE_FEAT_F4HWN_CHARGING_C    ?= 0
 ENABLE_FEAT_F4HWN_SLEEP         ?= 1
 ENABLE_FEAT_F4HWN_RESUME_STATE  ?= 1
@@ -78,21 +71,17 @@ ENABLE_AM_FIX_SHOW_DATA         ?= 0
 ENABLE_AGC_SHOW_DATA            ?= 0
 ENABLE_UART_RW_BK_REGS          ?= 0
 
-# This Japanese target is receive-only. Keep optional TX-capable paths off
-# even when a caller tries to enable them on the make command line.
+# This Japanese target is receive-only. RF transmit features are deliberately
+# not Makefile options: source guards remain for upstream provenance, but this
+# build cannot opt those paths back in accidentally.
 override ENABLE_RX_ONLY                  := 1
 override ENABLE_SCAN_RANGES              := 1
-override ENABLE_AIRCOPY                   := 0
 override ENABLE_ALARM                     := 0
 override ENABLE_DTMF_CALLING              := 0
 override ENABLE_EXTRA_UART_CMD            := 0
 override ENABLE_F_CAL_MENU                := 0
-override ENABLE_REGA                      := 0
-override ENABLE_TX1750                    := 0
-override ENABLE_TX_WHEN_AM                := 0
 override ENABLE_UART_RW_BK_REGS           := 0
 override ENABLE_VOX                       := 0
-override ENABLE_FEAT_F4HWN_RX_TX_TIMER   := 0
 
 # ---- COMPILER/LINKER OPTIONS ----
 ENABLE_CLANG                    ?= 0
@@ -142,7 +131,7 @@ ifeq ($(ENABLE_FMRADIO),1)
 	OBJS += driver/bk1080.o
 endif
 OBJS += driver/bk4819.o
-ifeq ($(filter $(ENABLE_AIRCOPY) $(ENABLE_UART),1),1)
+ifeq ($(ENABLE_UART),1)
 	OBJS += driver/crc.o
 endif
 OBJS += driver/eeprom.o
@@ -162,9 +151,6 @@ endif
 
 # Main
 OBJS += app/action.o
-ifeq ($(ENABLE_AIRCOPY),1)
-	OBJS += app/aircopy.o
-endif
 OBJS += app/app.o
 OBJS += app/chFrScanner.o
 OBJS += app/common.o
@@ -173,9 +159,6 @@ ifeq ($(ENABLE_RX_ONLY),1)
 	OBJS += app/rx_band_presets.o
 	OBJS += app/rx_scan_skip.o
 	OBJS += app/rx_feature_state.o
-endif
-ifeq ($(ENABLE_REGA),1)
-	OBJS += app/rega.o
 endif
 ifeq ($(ENABLE_FLASHLIGHT),1)
 	OBJS += app/flashlight.o
@@ -215,9 +198,6 @@ OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o
 OBJS += settings.o
-ifeq ($(ENABLE_AIRCOPY),1)
-	OBJS += ui/aircopy.o
-endif
 OBJS += ui/battery.o
 ifeq ($(ENABLE_FMRADIO),1)
 	OBJS += ui/fmradio.o
@@ -274,7 +254,7 @@ ifeq ($(ENABLE_FEAT_F4HWN),1)
 	# F4HWN uses the _2 fields for the displayed and packed firmware identity.
 	ifeq ($(ENABLE_JAPANESE),1)
 		AUTHOR_STRING_2 ?= Kris
-		VERSION_STRING_2 ?= v4.3J4
+		VERSION_STRING_2 ?= v4.3J5
 		EDITION_STRING ?= JP-RX-Only
 	else
 		AUTHOR_STRING_2 ?= F4HWN
@@ -360,9 +340,6 @@ endif
 ifeq ($(ENABLE_OVERLAY),1)
 	CFLAGS += -DENABLE_OVERLAY
 endif
-ifeq ($(ENABLE_AIRCOPY),1)
-	CFLAGS += -DENABLE_AIRCOPY
-endif
 ifeq ($(ENABLE_FMRADIO),1)
 	CFLAGS += -DENABLE_FMRADIO
 endif
@@ -387,9 +364,6 @@ endif
 ifeq ($(ENABLE_ALARM),1)
 	CFLAGS  += -DENABLE_ALARM
 endif
-ifeq ($(ENABLE_TX1750),1)
-	CFLAGS  += -DENABLE_TX1750
-endif
 ifeq ($(ENABLE_PWRON_PASSWORD),1)
 	CFLAGS  += -DENABLE_PWRON_PASSWORD
 endif
@@ -398,9 +372,6 @@ ifeq ($(ENABLE_KEEP_MEM_NAME),1)
 endif
 ifeq ($(ENABLE_WIDE_RX),1)
 	CFLAGS  += -DENABLE_WIDE_RX
-endif
-ifeq ($(ENABLE_TX_WHEN_AM),1)
-	CFLAGS  += -DENABLE_TX_WHEN_AM
 endif
 ifeq ($(ENABLE_F_CAL_MENU),1)
 	CFLAGS  += -DENABLE_F_CAL_MENU
@@ -450,9 +421,6 @@ endif
 ifeq ($(ENABLE_BAND_SCOPE),1)
 	CFLAGS += -DENABLE_BAND_SCOPE
 endif
-ifeq ($(ENABLE_REDUCE_LOW_MID_TX_POWER),1)
-	CFLAGS  += -DENABLE_REDUCE_LOW_MID_TX_POWER
-endif
 ifeq ($(ENABLE_BYP_RAW_DEMODULATORS),1)
 	CFLAGS  += -DENABLE_BYP_RAW_DEMODULATORS
 endif
@@ -464,9 +432,6 @@ ifeq ($(ENABLE_SCAN_RANGES),1)
 endif
 ifeq ($(ENABLE_DTMF_CALLING),1)
 	CFLAGS  += -DENABLE_DTMF_CALLING
-endif
-ifeq ($(ENABLE_REGA),1)
-	CFLAGS  += -DENABLE_REGA
 endif
 ifeq ($(ENABLE_AGC_SHOW_DATA),1)
 	CFLAGS  += -DENABLE_AGC_SHOW_DATA
@@ -501,9 +466,6 @@ ifeq ($(ENABLE_FEAT_F4HWN_SCREENSHOT),1)
 endif
 ifeq ($(ENABLE_FEAT_F4HWN_SPECTRUM),1)
 	CFLAGS  += -DENABLE_FEAT_F4HWN_SPECTRUM
-endif
-ifeq ($(ENABLE_FEAT_F4HWN_RX_TX_TIMER),1)
-	CFLAGS  += -DENABLE_FEAT_F4HWN_RX_TX_TIMER
 endif
 ifeq ($(ENABLE_FEAT_F4HWN_CHARGING_C),1)
 	CFLAGS  += -DENABLE_FEAT_F4HWN_CHARGING_C

@@ -50,9 +50,6 @@ enum
     MENU_SCR,
 #endif
     MENU_BCL,
-#if defined(ENABLE_FEAT_F4HWN) && !defined(ENABLE_RX_ONLY)
-    MENU_TX_LOCK, 
-#endif
     MENU_MEM_CH,
     MENU_DEL_CH,
     MENU_MEM_NAME,

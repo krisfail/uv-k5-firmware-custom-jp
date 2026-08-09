@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WRX-JP フォント・ドット編集</title>
+<style>
+:root { color-scheme: light; font-family: system-ui, sans-serif; }
+body { margin: 0; background: #f4f6f8; color: #18212b; }
+main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+h1 { margin: 0 0 8px; font-size: 1.5rem; }
+p { margin: 6px 0 14px; }
+.panel { background: white; border: 1px solid #ccd4dc; border-radius: 8px; padding: 14px; margin: 12px 0; }
+.toolbar, .selectors, .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+label { font-weight: 600; }
+select, input[type=file], button, textarea { font: inherit; }
+button, select { border: 1px solid #98a6b5; border-radius: 5px; background: #fff; padding: 5px 9px; }
+button { cursor: pointer; }
+button:hover { background: #edf4fb; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+.hint, .status { color: #52616f; font-size: .9rem; }
+.status { min-height: 1.3em; margin-top: 10px; }
+.editor { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr); gap: 18px; align-items: start; }
+.grid-wrap { overflow: auto; border: 1px solid #ccd4dc; background: #e9eef2; padding: 12px; }
+#grid { display: grid; grid-template-columns: repeat(var(--cols), var(--cell)); width: max-content; background: #d7dee5; border: 1px solid #7e8b98; }
+.cell { box-sizing: border-box; width: var(--cell); height: var(--cell); padding: 0; border: 1px solid #d3dbe2; border-radius: 0; background: #f9fbfc; }
+.cell.top-padding { background: #eaf2ff; }
+.cell.glyph-area { background: #fffbea; }
+.cell.bottom-padding { background: #eef1f4; }
+.cell.on { background: #18212b; border-color: #18212b; }
+.cell:focus { outline: 2px solid #1976d2; outline-offset: -2px; }
+textarea { box-sizing: border-box; width: 100%; min-height: 92px; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: .85rem; }
+.output { margin-top: 12px; }
+.output h2 { font-size: 1rem; margin: 0 0 6px; }
+.legend { display: inline-flex; align-items: center; gap: 5px; margin-left: 12px; font-weight: 400; font-size: .85rem; }
+.swatch { display: inline-block; width: 14px; height: 14px; border: 1px solid #7e8b98; background: #18212b; }
+.layout-guide { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 10px 0; padding: 9px 10px; border: 1px solid #b8c7d6; border-radius: 5px; background: #f7fbff; }
+.layout-guide strong { color: #173b5c; }
+.layout-guide .guide-note { color: #52616f; font-size: .88rem; }
+.guide-chip { display: inline-block; padding: 2px 6px; border: 1px solid #c7d0d9; border-radius: 4px; font-size: .82rem; }
+.guide-top { background: #eaf2ff; }
+.guide-glyph { background: #fffbea; }
+.guide-bottom { background: #eef1f4; }
+@media (max-width: 760px) { .editor { grid-template-columns: 1fr; } main { padding: 12px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>WRX-JP フォント・ドット編集</h1>
+  <p>フォント台帳の1字形をクリック編集し、ファームウェアへ貼り付けるC初期化子を生成します。ソースは自動変更しません。</p>
+
+  <section class="panel">
+    <div class="toolbar">
+      <label for="inventoryFile">台帳JSON</label>
+      <input id="inventoryFile" type="file" accept=".json,application/json">
+      <button id="loadDefault" type="button">標準台帳を読み込む</button>
+    </div>
+    <div class="hint">リポジトリ直下でローカルHTTPサーバーを起動した場合は「標準台帳を読み込む」が使えます。file://で開く場合はJSONを選択してください。</div>
+    <div id="status" class="status" role="status">台帳JSONを読み込んでください。</div>
+  </section>
+
+  <section class="panel">
+    <div class="selectors">
+      <label for="arraySelect">配列</label>
+      <select id="arraySelect" disabled></select>
+      <label for="glyphSelect">字形</label>
+      <select id="glyphSelect" disabled></select>
+      <button id="undo" type="button" disabled>元に戻す</button>
+      <button id="redo" type="button" disabled>やり直す</button>
+      <button id="reset" type="button" disabled>読込時に戻す</button>
+      <label for="zoom">表示倍率</label>
+      <input id="zoom" type="range" min="12" max="42" value="26">
+      <span id="zoomValue">26px</span>
+    </div>
+  </section>
+
+  <section class="panel editor">
+    <div>
+      <div class="hint">黒が点灯、白が消灯です。ドラッグでも連続編集できます。各バイトはOLED列で、bit 0が上側です。
+        <span class="legend"><span class="swatch"></span>点灯</span>
+      </div>
+      <div id="layoutGuide" class="layout-guide" aria-live="polite">
+        <strong>表示位置の基準</strong>
+        <span id="layoutSummary" class="guide-note">大字形16行: 上2行・下4行</span>
+        <span class="guide-chip guide-top">上余白 2行</span>
+        <span class="guide-chip guide-glyph">字形領域 10行</span>
+        <span class="guide-chip guide-bottom">下余白 4行</span>
+        <span id="glyphSummary" class="guide-note"></span>
+      </div>
+      <div class="grid-wrap"><div id="grid" aria-label="ドット編集グリッド"></div></div>
+    </div>
+    <div>
+      <div class="output">
+        <h2>バイト列</h2>
+        <textarea id="hexOutput" readonly></textarea>
+      </div>
+      <div class="output">
+        <h2>C初期化子</h2>
+        <textarea id="cOutput" readonly></textarea>
+        <div class="actions"><button id="copyC" type="button" disabled>C初期化子をコピー</button></div>
+      </div>
+      <div class="output">
+        <h2>JSONパッチ</h2>
+        <textarea id="jsonOutput" readonly></textarea>
+        <div class="actions"><button id="downloadPatch" type="button" disabled>JSONパッチを保存</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+"use strict";
+
+const state = {
+  inventory: null,
+  fontArrays: [],
+  currentArray: null,
+  currentGlyph: null,
+  bytes: [],
+  originalBytes: [],
+  history: [],
+  future: [],
+  drawing: false,
+  drawValue: false,
+};
+
+const $ = (id) => document.getElementById(id);
+const status = (message, error = false) => {
+  $("status").textContent = message;
+  $("status").style.color = error ? "#b3261e" : "";
+};
+const hexBytes = (bytes) => bytes.map((value) => `0x${value.toString(16).padStart(2, "0")}`).join(", ");
+const displayLabel = (glyph) => {
+  const label = glyph.label || "未注釈";
+  return label.split(" (", 1)[0];
+};
+const cloneBytes = (bytes) => bytes.slice();
+
+const BIG_CELL_ROWS = 16;
+const BIG_TOP_PADDING = 2;
+const BIG_BOTTOM_PADDING = 4;
+function parseBytes(value) {
+  if (Array.isArray(value)) return value.map(Number);
+  return String(value || "").trim().split(/\s+/).filter(Boolean).map((part) => Number.parseInt(part, 16));
+}
+
+function selectedLayout() {
+  return {
+    width: Number(state.currentArray.glyph_width),
+    pages: Number(state.currentArray.glyph_pages),
+  };
+}
+
+function displayZone(row, rows) {
+  if (rows !== BIG_CELL_ROWS) return "glyph-area";
+  if (row < BIG_TOP_PADDING) return "top-padding";
+  if (row >= rows - BIG_BOTTOM_PADDING) return "bottom-padding";
+  return "glyph-area";
+}
+
+function setEnabled(enabled) {
+  for (const id of ["arraySelect", "glyphSelect"]) $(id).disabled = !enabled;
+  for (const id of ["undo", "redo", "reset", "copyC", "downloadPatch"]) $(id).disabled = !enabled;
+}
+
+function loadInventory(data) {
+  if (!data || !Array.isArray(data.arrays)) throw new Error("arraysを含む台帳JSONではありません");
+  const candidates = data.arrays.filter((array) => Array.isArray(array.glyphs) && array.glyph_width && array.glyph_pages);
+  if (!candidates.length) throw new Error("編集可能なフォント配列がありません");
+  state.inventory = data;
+  state.fontArrays = candidates;
+  $("arraySelect").replaceChildren(...candidates.map((array, index) => {
+    const option = new Option(`${array.name} (${array.category})`, String(index));
+    return option;
+  }));
+  const preferredArray = candidates.findIndex((array) => array.glyphs.some((glyph) => displayLabel(glyph) === "専"));
+  $("arraySelect").value = String(preferredArray >= 0 ? preferredArray : 0);
+  populateGlyphs();
+  setEnabled(true);
+  status(`${candidates.length}個のフォント配列を読み込みました。`);
+}
+
+function populateGlyphs() {
+  state.currentArray = state.fontArrays[Number($("arraySelect").value)];
+  const glyphs = state.currentArray.glyphs;
+  $("glyphSelect").replaceChildren(...glyphs.map((glyph, index) => {
+    const label = displayLabel(glyph);
+    const option = new Option(`${glyph.code} ${label}`, String(index));
+    return option;
+  }));
+  let preferred = glyphs.findIndex((glyph) => displayLabel(glyph) === "専");
+  if (preferred < 0) preferred = glyphs.findIndex((glyph) => displayLabel(glyph) === "用");
+  $("glyphSelect").value = String(preferred >= 0 ? preferred : 0);
+  selectGlyph();
+}
+
+function selectGlyph() {
+  state.currentGlyph = state.currentArray.glyphs[Number($("glyphSelect").value)];
+  state.bytes = parseBytes(state.currentGlyph.bytes_hex);
+  state.originalBytes = cloneBytes(state.bytes);
+  state.history = [];
+  state.future = [];
+  render();
+}
+
+function pixelIndex(x, y) {
+  const { width } = selectedLayout();
+  return Math.floor(y / 8) * width + x;
+}
+
+function pixelOn(x, y) {
+  const index = pixelIndex(x, y);
+  return Boolean(state.bytes[index] & (1 << (y % 8)));
+}
+
+function setPixel(x, y, on) {
+  const index = pixelIndex(x, y);
+  const mask = 1 << (y % 8);
+  const old = Boolean(state.bytes[index] & mask);
+  if (old === on) return false;
+  if (on) state.bytes[index] |= mask;
+  else state.bytes[index] &= ~mask;
+  return true;
+}
+
+function beginEdit() {
+  state.history.push(cloneBytes(state.bytes));
+  state.future = [];
+}
+
+function editCell(x, y, recordHistory = false) {
+  if (recordHistory) beginEdit();
+  if (setPixel(x, y, state.drawValue)) {
+    const cell = $("grid").querySelector(`[data-x="${x}"][data-y="${y}"]`);
+    if (cell) {
+      cell.classList.toggle("on", state.drawValue);
+      cell.setAttribute("aria-label", `列${x + 1} 行${y + 1} ${state.drawValue ? "点灯" : "消灯"}`);
+    }
+    renderOutputs();
+  }
+}
+
+function renderGrid() {
+  const { width, pages } = selectedLayout();
+  const rows = pages * 8;
+  const grid = $("grid");
+  grid.style.setProperty("--cols", width);
+  grid.style.setProperty("--cell", `${$("zoom").value}px`);
+  grid.replaceChildren();
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const cell = document.createElement("button");
+      cell.type = "button";
+      const zone = displayZone(y, rows);
+      cell.className = `cell ${zone}${pixelOn(x, y) ? " on" : ""}`;
+      cell.dataset.x = String(x);
+      cell.dataset.y = String(y);
+      cell.setAttribute("aria-label", `列${x + 1} 行${y + 1} ${pixelOn(x, y) ? "点灯" : "消灯"}`);
+      cell.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        state.drawing = true;
+        state.drawValue = !pixelOn(x, y);
+        editCell(x, y, true);
+        cell.setPointerCapture?.(event.pointerId);
+      });
+      cell.addEventListener("pointerenter", () => {
+        if (state.drawing) editCell(x, y);
+      });
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function visibleBounds() {
+  const { width, pages } = selectedLayout();
+  const rows = pages * 8;
+  let min = rows;
+  let max = -1;
+  for (let y = 0; y < rows; y += 1) for (let x = 0; x < width; x += 1) {
+    if (pixelOn(x, y)) { min = Math.min(min, y); max = Math.max(max, y); }
+  }
+  return max < 0 ? "点灯なし" : `点灯範囲: 表示行${min + 1}–${max + 1}`;
+}
+
+function renderLayoutGuide() {
+  const { width, pages } = selectedLayout();
+  const rows = pages * 8;
+  if (rows === BIG_CELL_ROWS) {
+    const kind = width === 10 ? "日本語特大字形" : "大字形";
+    $("layoutSummary").textContent = `${kind} ${width}列×${rows}行: 欧文・日本語共通 / 上2行・下4行`;
+  } else {
+    $("layoutSummary").textContent = `小字形 ${width}列×${rows}行: bit 0が上（大字形の上下基準は適用しない）`;
+  }
+  $("glyphSummary").textContent = state.currentGlyph ? ` / ${visibleBounds()}` : "";
+}
+
+function renderOutputs() {
+  const code = state.currentGlyph.code;
+  const label = displayLabel(state.currentGlyph);
+  const bytes = hexBytes(state.bytes);
+  $("hexOutput").value = bytes;
+  $("cOutput").value = `{${bytes}}, //${code} ${label}`;
+  $("jsonOutput").value = JSON.stringify({
+    array: state.currentArray.name,
+    code,
+    label: state.currentGlyph.label || null,
+    element_width: state.currentArray.element_width,
+    bytes_hex: bytes,
+  }, null, 2);
+  $("undo").disabled = state.history.length === 0;
+  $("redo").disabled = state.future.length === 0;
+}
+
+function render() {
+  if (!state.currentGlyph) return;
+  renderLayoutGuide();
+  renderGrid();
+  renderOutputs();
+}
+
+function undo() {
+  if (!state.history.length) return;
+  state.future.push(cloneBytes(state.bytes));
+  state.bytes = state.history.pop();
+  render();
+}
+
+function redo() {
+  if (!state.future.length) return;
+  state.history.push(cloneBytes(state.bytes));
+  state.bytes = state.future.pop();
+  render();
+}
+
+function reset() {
+  beginEdit();
+  state.bytes = cloneBytes(state.originalBytes);
+  render();
+}
+
+async function copyC() {
+  const output = $("cOutput").value;
+  try {
+    await navigator.clipboard.writeText(output);
+    status("C初期化子をクリップボードへコピーしました。");
+  } catch (_) {
+    $("cOutput").select();
+    status("コピー権限がないため、C初期化子を選択しました。Ctrl+Cでコピーしてください。", true);
+  }
+}
+
+function downloadPatch() {
+  const blob = new Blob([$("jsonOutput").value + "\n"], { type: "application/json" });
+  const anchor = document.createElement("a");
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = `font-glyph-${state.currentGlyph.code.replace(/^0x/i, "0x")}.json`;
+  anchor.click();
+  URL.revokeObjectURL(anchor.href);
+}
+
+$("inventoryFile").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try { loadInventory(JSON.parse(await file.text())); }
+  catch (error) { status(`読込失敗: ${error.message}`, true); }
+});
+$("loadDefault").addEventListener("click", async () => {
+  try {
+    const response = await fetch("../docs/assets/font-atlas/bitmap_atlas_inventory.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    loadInventory(await response.json());
+  } catch (error) {
+    status("標準台帳を読めません。JSONファイルを選択するか、HTTPサーバー経由で開いてください。", true);
+  }
+});
+$("arraySelect").addEventListener("change", populateGlyphs);
+$("glyphSelect").addEventListener("change", selectGlyph);
+$("undo").addEventListener("click", undo);
+$("redo").addEventListener("click", redo);
+$("reset").addEventListener("click", reset);
+$("copyC").addEventListener("click", copyC);
+$("downloadPatch").addEventListener("click", downloadPatch);
+$("zoom").addEventListener("input", () => {
+  $("zoomValue").textContent = `${$("zoom").value}px`;
+  if (state.currentGlyph) renderGrid();
+});
+window.addEventListener("pointerup", () => { state.drawing = false; });
+</script>
+</body>
+</html>

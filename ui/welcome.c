@@ -103,6 +103,15 @@ void UI_DisplayWelcome(void)
                 gBatteryVoltageAverage % 100,
                 BATTERY_VoltsToPercent(gBatteryVoltageAverage));
 
+#ifdef ENABLE_RX_ONLY
+        if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_ALL ||
+            gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_MESSAGE)
+        {
+            memcpy(WelcomeString0, UI_RxOnlyWelcome0, sizeof(UI_RxOnlyWelcome0));
+            memcpy(WelcomeString1, UI_RxOnlyWelcome1, sizeof(UI_RxOnlyWelcome1));
+        }
+        else
+#endif
         if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE)
         {
             strcpy(WelcomeString0, "VOLTAGE");
@@ -112,13 +121,8 @@ void UI_DisplayWelcome(void)
         {
             if(strlen(WelcomeString0) == 0 && strlen(WelcomeString1) == 0)
             {
-#ifdef ENABLE_RX_ONLY
-                memcpy(WelcomeString0, UI_RxOnlyWelcome0, sizeof(UI_RxOnlyWelcome0));
-                memcpy(WelcomeString1, UI_RxOnlyWelcome1, sizeof(UI_RxOnlyWelcome1));
-#else
                 strcpy(WelcomeString0, "WELCOME");
                 strcpy(WelcomeString1, WelcomeString2);
-#endif
             }
             else if(strlen(WelcomeString0) == 0 || strlen(WelcomeString1) == 0)
             {

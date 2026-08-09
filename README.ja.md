@@ -1,6 +1,6 @@
 # UV-K5 日本語・受信専用ファームウェア
 
-[英語版README](README.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [開発者向けガイド](DEVELOPMENT.md) | [CHIRPドライバ](tools/chirp/README.ja.md) | [新機能の技術詳細](docs/FEATURES_TECHNICAL.ja.md) | [bitmap/font atlas](docs/BITMAP_ATLAS.ja.md)
+[英語版README](README.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [開発者向けガイド](DEVELOPMENT.md) | [CHIRPドライバ](tools/chirp/README.ja.md) | [新機能の技術詳細](docs/FEATURES_TECHNICAL.ja.md) | [機能優先度](docs/FEATURE_PRIORITY.ja.md) | [bitmap/font atlas](docs/BITMAP_ATLAS.ja.md)
 
 ## このリポジトリの位置づけ
 
@@ -8,7 +8,7 @@
 
 ## AI支援（AI-Assisted）開発と現状有姿での提供
 
-コードの分析、実装、テスト補助、文書作成の一部にAI支援を使用しています。採用前にソースコード、静的テスト、ビルド、可能な範囲の実機結果を確認していますが、AI支援は保守者によるレビューや利用者の実機確認を代替しません。
+コードの分析、実装、テスト補助、文書作成の一部にAI支援を使用しています。公開前に保守者が確認していますが、AI支援は保守者によるレビューや利用者の実機確認を代替しません。
 
 ファームウェアは**現状有姿（AS IS）**で提供し、動作や特定目的への適合を保証しません。書き込み失敗、無線機の破損、EEPROM・校正データ・設定の消失、復旧不能、法令・無線規制に反する使用について、保守者は責任を負いません。書き込み前にEEPROMと校正データをバックアップし、機種に対応したイメージと復旧手段を用意してください。
 
@@ -16,18 +16,14 @@
 
 この文書は、UV-K5向けの日本語・受信専用版を使う人を対象にしています。初めて使う場合は「対象と制約」「ビルド」「書き込み」の順に確認し、日常の操作は[CHEATSHEET.ja.md](CHEATSHEET.ja.md)を参照してください。
 
-### 文書の役割
+### 詳しい情報
 
-- `README.ja.md`: 対象、制約、安全上の注意、ビルド、書き込み、基本操作をまとめた正規ガイド
-- `README.md`: 英語の短縮版。上流の説明は要約し、詳細は上流Wikiへリンク
-- `CHEATSHEET.ja.md`: 日常操作、ビルドコマンド、書き込み前チェックだけを確認する早見表
-- `DEVELOPMENT.md`: 開発者向けのソース構成、変更境界、検証、atlas生成、リリース取り扱い
-- `tools/chirp/README.ja.md`: CHIRPの機種選択、読み書き範囲、校正領域の扱い
-- `tools/chirp/NOTICE.md` / `LICENSE.txt`: CHIRPドライバの帰属表示とライセンス
-- `docs/FEATURES_TECHNICAL.ja.md`: 新機能の実装、EEPROM配置、フォント、検証範囲の技術資料
-- `k5viewer/README.md`: K5Viewer固有の説明。ファームウェア全体の説明とは分けて管理
+- 日常操作と最小限のビルド手順は[CHEATSHEET.ja.md](CHEATSHEET.ja.md)
+- CHIRPの機種選択・読み書き範囲・校正領域は[CHIRPドライバの説明](tools/chirp/README.ja.md)
+- 開発者向けのソース構成・検証・atlas生成は[DEVELOPMENT.md](DEVELOPMENT.md)
+- 実装、保存形式、容量判断、未検証範囲は[技術詳細](docs/FEATURES_TECHNICAL.ja.md)と[機能優先度](docs/FEATURE_PRIORITY.ja.md)
 
-同じ説明を複数の文書へ追加せず、機能の説明はこのREADME、CHIRP固有の説明は`tools/chirp/README.ja.md`へ追記してください。
+このREADMEは利用者向けの案内です。実装上の判断やAIエージェント向けの作業規則は、上記の開発者向け文書と[AGENTS.md](AGENTS.md)に分けて記載しています。
 
 ## 対象と制約
 
@@ -36,7 +32,7 @@
 - PTTは送信開始ではなく、モニター機能に割り当てています。
 - 送信系のメニューと送信処理を除外しています。
 - FM放送受信は`76.0–95.0 MHz`に固定しています。
-- 表示名は`Kris v4.3J4`、エディション名は`JP-RX-Only`です。
+- 表示名は`Kris v4.3J5`、エディション名は`JP-RX-Only`です。
 - 日本語フォントは大きい文字と小さい文字の両方で使用します。表示幅の制約から、一部のメニュー名は短い英字表記を残しています。
 
 対象機種の個体差、書き込み方法、受信環境による動作差があります。書き込み前に必ずEEPROMをバックアップし、異なる機種向けのイメージを使用しないでください。
@@ -90,6 +86,13 @@
 
 メニュー番号を数字キーで入力すると、その項目へ直接移動できます。メニュー全体の対応は上流版の[Wiki](https://github.com/armel/uv-k5-firmware-custom/wiki)も参照してください。
 
+## 表示と利用できない操作
+
+- 受信専用画面では送信出力の`LOW`／`HIGH`表示を出しません。
+- 通常の`PTT`はモニター操作です。予期しないTX要求が最終的な安全ゲートへ到達した場合だけ、ビープ音と`TX DISABLE`を表示します。
+- 受信拡張の条件が合わない操作は、ビープ音だけでなく`RXExt OFF`、`VFO ONLY`、`SCAN ACTIVE`、`FM ONLY`など短い理由を表示します。
+- 起動画面の`MESSAGE`／`ALL`は、保存済みの上流版メッセージではなく、この版の受信専用表示を使用します。
+
 ## ビルド
 
 コマンドはリポジトリのルートで実行します。必要なものは`arm-none-eabi-gcc`、GNU Make、Pythonです。回帰テストにはPythonが必要で、パック済みイメージの生成には`crcmod`が必要です。
@@ -102,7 +105,8 @@ make -j2
 主な生成物は次のとおりです。
 
 - `wrx-jp.bin`: 生のファームウェアイメージ
-- `wrx-jp.packed.bin`: 書き込み用のパック済みイメージ
+- `wrx-jp.packed.bin`: ビルドディレクトリに生成されるパック済みイメージ
+- `release/wrx-jp-v4.3J5.packed.bin`: コミット対象のリリース相当イメージ
 - `wrx-jp`: ELF形式のデバッグ用ファイル
 
 `wrx-jp.packed.bin`が必要なのに生成されない場合は、Pythonと`crcmod`を確認してから再ビルドします。
@@ -122,15 +126,15 @@ make -j2
 ## 書き込み前後
 
 1. EEPROMをバックアップする。
-2. 対象機種に対応する`wrx-jp.packed.bin`を選ぶ。
+2. 対象機種に対応する`release/wrx-jp-v4.3J5.packed.bin`を選ぶ。
 3. 書き込み手順は上流版の[Flashing the firmware](https://github.com/armel/uv-k5-firmware-custom/wiki/Flashing-the-firmware)を確認する。
 4. 書き込み後、起動表示、周波数入力、FM放送、PTTのモニター動作を確認する。
 
 PTTを押しても送信しないことがこの版の設計です。実機で予想外の動作を確認した場合は、使用を続けず、バックアップとファームウェアの対応機種を確認してください。
 
-## 更新・問い合わせ
+## 問い合わせ
 
-機能の変更はソースコードとテストを確認したうえでREADMEへ反映します。READMEで解決しない場合は、対象機種、表示されている版、使用したイメージ名、再現手順を添えてリポジトリのIssueへ報告してください。
+READMEで解決しない場合は、対象機種、表示されている版、使用したイメージ名、再現手順を添えてリポジトリのIssueへ報告してください。実機で再現した表示や音の問題は、可能なら写真・動画と、書き込み前のバックアップの有無も添えてください。
 
 ## ライセンス
 
