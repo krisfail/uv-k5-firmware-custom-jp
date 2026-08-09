@@ -66,8 +66,8 @@ class FontAtlasTests(unittest.TestCase):
     def test_extra_large_japanese_table_is_compact_and_editable(self) -> None:
         array = self.parse_array("gFontJapaneseExtraLarge")
         self.assertEqual(array.glyph_layout, (10, 2))
-        self.assertEqual([glyph["code"] for glyph in array.glyphs or []], [0x80, 0x81, 0x98, 0x99])
-        self.assertTrue(all(not glyph["occupied"] for glyph in array.glyphs or []))
+        self.assertEqual([glyph["code"] for glyph in array.glyphs or []], [0x98, 0x99])
+        self.assertTrue(all(glyph["occupied"] for glyph in array.glyphs or []))
 
     def test_malformed_contiguous_glyph_is_rejected(self) -> None:
         initializer = "{" + ",".join(["0"] * 13) + "}"

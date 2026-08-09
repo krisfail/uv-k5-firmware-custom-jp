@@ -108,10 +108,23 @@ void UI_PrintString(const char *pString, uint8_t Start, uint8_t End, uint8_t Lin
         if (code > ' ' && code <= FONT_CODE_MAX)
         {
             const unsigned int index = code - ' ' - 1;
+#ifdef ENABLE_RX_ONLY
+            if (code >= 0x98 && code <= 0x99)
+            {
+                const uint8_t *const glyph = gFontJapaneseExtraLarge[code - 0x98];
+                memcpy(gFrameBuffer[Line + 0] + ofs, glyph, FONT_JP_EXTRA_LARGE_WIDTH);
+                memcpy(gFrameBuffer[Line + 1] + ofs,
+                       glyph + FONT_JP_EXTRA_LARGE_WIDTH,
+                       FONT_JP_EXTRA_LARGE_WIDTH);
+            }
+            else
+#endif
+            {
             /* ASCII and Japanese large glyphs now share the same cell and
              * baseline; the source tables already contain display rows. */
-            memcpy(gFrameBuffer[Line + 0] + ofs, &gFontBig[index][0], 7);
-            memcpy(gFrameBuffer[Line + 1] + ofs, &gFontBig[index][7], 7);
+                memcpy(gFrameBuffer[Line + 0] + ofs, &gFontBig[index][0], 7);
+                memcpy(gFrameBuffer[Line + 1] + ofs, &gFontBig[index][7], 7);
+            }
         }
     }
 }

@@ -1635,8 +1635,8 @@
         "FONT_JP_EXTRA_LARGE_GLYPHS"
       ],
       "element_width": null,
-      "size": 4,
-      "bytes_hex": "80 81 98 99",
+      "size": 2,
+      "bytes_hex": "98 99",
       "layout": "column-strip"
     },
     {
@@ -1644,40 +1644,28 @@
       "category": "font",
       "source": "font.c",
       "dimensions": [
-        "4",
+        "2",
         "20"
       ],
       "element_width": 20,
-      "size": 80,
-      "bytes_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "size": 40,
+      "bytes_hex": "00 04 88 50 20 50 88 04 00 00 00 01 00 00 00 00 00 01 00 00 00 fc 54 54 fc 54 54 fc 00 00 00 0f 00 00 03 00 08 0f 00 00",
       "layout": "glyph-2page",
       "glyph_width": 10,
       "glyph_pages": 2,
-      "glyph_count": 4,
+      "glyph_count": 2,
       "glyphs": [
-        {
-          "code": "0x80",
-          "label": "受",
-          "occupied": false,
-          "bytes_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
-        },
-        {
-          "code": "0x81",
-          "label": "信",
-          "occupied": false,
-          "bytes_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
-        },
         {
           "code": "0x98",
           "label": "専",
-          "occupied": false,
-          "bytes_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+          "occupied": true,
+          "bytes_hex": "00 04 88 50 20 50 88 04 00 00 00 01 00 00 00 00 00 01 00 00"
         },
         {
           "code": "0x99",
           "label": "用",
-          "occupied": false,
-          "bytes_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+          "occupied": true,
+          "bytes_hex": "00 fc 54 54 fc 54 54 fc 00 00 00 0f 00 00 03 00 08 0f 00 00"
         }
       ]
     },

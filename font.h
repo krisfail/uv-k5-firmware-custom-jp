@@ -31,7 +31,7 @@
 #define FONT_JP_EXTRA_LARGE_WIDTH 10u
 #define FONT_JP_EXTRA_LARGE_PAGES 2u
 #define FONT_JP_EXTRA_LARGE_BYTES (FONT_JP_EXTRA_LARGE_WIDTH * FONT_JP_EXTRA_LARGE_PAGES)
-#define FONT_JP_EXTRA_LARGE_GLYPHS 4u
+#define FONT_JP_EXTRA_LARGE_GLYPHS 2u
 
 extern const uint8_t gFontBig[191][16 - 2];
 extern const uint8_t gFontBigDigits[11][26 - 6];

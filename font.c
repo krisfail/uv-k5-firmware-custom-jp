@@ -492,21 +492,21 @@ const uint8_t gFontSmall[95-1][6] =
 /*
  * Japanese extra-large glyphs are intentionally a small, code-point-mapped
  * table. K5 has very little flash headroom, so reserving all 0x80..0xDF
- * slots would be wasteful. The four current receive-only welcome glyphs
- * are reserved here for hand-authored 10x16 bitmaps.
+ * slots would be wasteful. The two suffix glyphs in the receive-only welcome
+ * message reuse the canonical 7x14 bitmaps above, centered in 10x16 cells.
+ * The leading 受・信 remain on the normal large path to keep K5 within its
+ * flash budget.
  */
 const uint8_t gFontJapaneseExtraLargeCodes[FONT_JP_EXTRA_LARGE_GLYPHS] = {
-    0x80,  // 受
-    0x81,  // 信
     0x98,  // 専
     0x99,  // 用
 };
 
-const uint8_t gFontJapaneseExtraLarge[4][20] = {
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // 0x80 受
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // 0x81 信
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // 0x98 専
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // 0x99 用
+const uint8_t gFontJapaneseExtraLarge[2][20] = {
+    {0x00,0x04,0x88,0x50,0x20,0x50,0x88,0x04,0x00,0x00,
+     0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00}, // 0x98 専
+    {0x00,0xfc,0x54,0x54,0xfc,0x54,0x54,0xfc,0x00,0x00,
+     0x00,0x0f,0x00,0x00,0x03,0x00,0x08,0x0f,0x00,0x00}, // 0x99 用
 };
 
 const uint8_t gFontSmallJapanese[FONT_CODE_MAX - 0x7F + 1][6] =
