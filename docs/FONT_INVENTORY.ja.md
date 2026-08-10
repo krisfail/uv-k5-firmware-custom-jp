@@ -175,8 +175,8 @@
 | `0x95` | 画 | 使用中 | 116 |
 | `0x96` | 面 | 使用中 | 117 |
 | `0x97` | 無 | 使用中 | 118 |
-| `0x98` | 専 (project-authored) | 使用中 | 119 |
-| `0x99` | 用 (project-authored) | 使用中 | 120 |
+| `0x98` | 専 (Izumi 16-derived, low-resolution reconstruction) | 使用中 | 119 |
+| `0x99` | 用 (Izumi 16-derived, low-resolution reconstruction) | 使用中 | 120 |
 | `0x9A` | 未注釈 | 空き | 121 |
 | `0x9B` | 未注釈 | 空き | 122 |
 | `0x9C` | 未注釈 | 空き | 123 |

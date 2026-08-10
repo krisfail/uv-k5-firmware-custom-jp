@@ -4,6 +4,8 @@
 
 この文書は人間の開発者向けの計画・容量判断資料です。利用者向けの機能説明は[README.ja.md](../README.ja.md)、AIエージェント向けの規則は[AGENTS.md](../AGENTS.md)を参照してください。
 
+> 現行の採用・保留・除外の判定は[FEATURE_AUDIT.ja.md](FEATURE_AUDIT.ja.md)へ統合しました。この文書は、K5の容量制約と判断経過を残す補足資料です。実機試験は[HARDWARE_TEST_PLAN.ja.md](HARDWARE_TEST_PLAN.ja.md)を使用します。
+
 ## 現在の優先度
 
 | 優先度 | 機能 | 状態 | 理由 |

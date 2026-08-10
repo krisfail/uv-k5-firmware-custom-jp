@@ -24,7 +24,7 @@ python -X utf8 tools/render_bitmap_atlas.py --out tmp/uv-k5-bitmap-atlas
 
 フォント配列には、コードポイント、ソースコメント、占有／空き状態、グリフ単位の元バイト列も収録します。新しい文字を追加する前は、[FONT_BITMAP_ANNOTATIONS.ja.md](FONT_BITMAP_ANNOTATIONS.ja.md)の台帳とこのinventoryを突き合わせてください。
 
-`gFontBig`は14 bytes/glyph（7列×2 OLEDページ）として認識し、連続した長いbyte列ではなくglyphごとのグリッドに配置します。`gFontBigDigits`も同じ2ページ形式として表示します。`gFontJapaneseExtraLarge`は20 bytes/glyph（10列×2 OLEDページ）の特大字形として表示します。K5の容量を守るため、特大字形はコード注釈付きの2スロット（専・用）だけを持つ疎な配列です。`gFontBig`のglyphラベルは`0x21`（`!`）からのコード値です。`#if 0`で無効化された旧配列は除外します。
+`gFontBig`は14 bytes/glyph（7列×2 OLEDページ）として認識し、連続した長いbyte列ではなくglyphごとのグリッドに配置します。`gFontBigDigits`も同じ2ページ形式として表示します。`gFontJapaneseExtraLarge`は20 bytes/glyph（10列×2 OLEDページ）の特大字形として表示します。K5の容量を守るため、特大字形はコード注釈付きの2スロット（専・用）だけを持つ疎な配列です。起動画面の`受信専用`は、4字すべてを低解像度向けに再構成した7×14字形で幅8として描画します。`gFontBig`のglyphラベルは`0x21`（`!`）からのコード値です。`#if 0`で無効化された旧配列は除外します。
 
 ## 大字形の縦位置契約
 
@@ -36,7 +36,7 @@ python -X utf8 tools/render_bitmap_atlas.py --out tmp/uv-k5-bitmap-atlas
 
 日本語大字形は、描画時に個別の上下シフトを行いません。ソース配列自体をこの座標系へ正規化しているため、atlasと実機描画の行番号が一致します。K1の長音「ー」も欧文ハイフンと同じ行に固定しています。編集画面では上下余白を色分けし、現在の字形の点灯範囲を表示します。
 
-特大字形は同じ16行契約で横幅を10列へ拡張しています。`UI_PrintStringJapaneseExtraLarge`は、特大表へ登録された日本語コードだけを指定位置へ描画する専用APIです。現在の4スロットは、通常大字形の「受・信・専・用」をセル中央へ再配置した実データです。受信専用の起動画面では日本語行に使用し、その他の場所では通常大字形と使い分けます。
+特大字形は同じ16行契約で横幅を10列へ拡張しています。`UI_PrintStringJapaneseExtraLarge`は、特大表へ登録された日本語コードだけを指定位置へ描画する専用APIです。K5では容量のため「専・用」の2スロットだけを持ち、公開フォントの線構造を手掛かりに独立再構成した10×16字形を保持します。起動画面は4字すべてを通常7×14系で描画します。出所と変換規則は[FONT_SOURCES.ja.md](FONT_SOURCES.ja.md)を参照してください。
 
 PNGが必要な場合はImageMagickで変換できます。
 

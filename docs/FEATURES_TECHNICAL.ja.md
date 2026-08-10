@@ -185,23 +185,24 @@ byte 7 bit 7 = extended bandwidth marker、bit 1–0 = W+／W／N／N- mode
 
 旧UV-K5では長音「ー」を別の拡張glyphへ追加せず、メニュー文字列でASCIIハイフン`-`へ符号化します。そのため既存の大文字・小文字ハイフンを共有でき、K1で問題になった大文字長音用の追加glyph変換は必要ありません。この仕様を変更する場合は、全メニュー文字列と表示幅のテストを同時に更新してください。
 
-`font.c`には`rainy-knight/uv-k5-jp`由来の字形を使用していることとApache-2.0の帰属がコメントで明記されています。再配布時もこの帰属を削除しないでください。
+`font.c`には`rainy-knight/uv-k5-jp`由来の字形を使用していることとApache-2.0の帰属がコメントで明記されています。`専`／`用`は公開フォントIzumi 16から独立変換した字形です。再配布時も既存の帰属を削除しないでください。出所と変換規則は[FONT_SOURCES.ja.md](FONT_SOURCES.ja.md)にまとめています。
 
-既存atlasを再生成して空きスロットを確認したうえで、起動画面の「受信専用」に必要な大フォント`0x98=専`、`0x99=用`だけをプロジェクト作成字形として追加しています。小フォントの空き領域は再利用せず、次の追加候補は`0x9A`–`0xA0`です。割り当ての根拠と元バイト列は[FONT_BITMAP_ANNOTATIONS.ja.md](FONT_BITMAP_ANNOTATIONS.ja.md)およびatlas inventoryで管理します。
+既存atlasを再生成して空きスロットを確認したうえで、起動画面の「受信専用」に必要な大フォント`0x98=専`、`0x99=用`を公開フォントの線構造を手掛かりに独立再構成しました。小フォントの空き領域は再利用せず、次の追加候補は`0x9A`–`0xA0`です。割り当ての根拠と元バイト列は[FONT_BITMAP_ANNOTATIONS.ja.md](FONT_BITMAP_ANNOTATIONS.ja.md)、出所は[FONT_SOURCES.ja.md](FONT_SOURCES.ja.md)、形状はatlas inventoryで管理します。
 
-表示場所によっては7列の大字形より広い日本語字形が必要になるため、K5では`gFontJapaneseExtraLarge`を「専・用」2スロットの疎な10×16表として使用しています。共通の`UI_PrintString`がこの2コードだけを10列字形へ切り替えるため、受信専用の起動画面を含む日本語大字形の表示へ適用されます。全コードポイント分を予約しないのは、K5のフラッシュ容量を保つためです。
+表示場所によっては7列の大字形より広い日本語字形が必要になるため、K5では`gFontJapaneseExtraLarge`を「専・用」2スロットの疎な10×16表として使用しています。起動画面の`受信専用`は、4字すべてを低解像度向けに再構成した7×14字形へ統一し、幅8で描画します。全コードポイント分を予約しないのは、K5のフラッシュ容量を保つためです。
 
 ### 5.2 フォント候補の評価
 
 | 候補 | ライセンス / 形式 | 採否 |
 | --- | --- | --- |
-| 現行Rainy由来データ | `font.c`の帰属ではApache-2.0。現行の7×14／小文字形式へ適合済み | 採用継続 |
+| 現行Rainy由来データ | `font.c`の帰属ではApache-2.0。既存の日本語領域と小文字形式 | 継続使用 |
 | [M+ Fonts](https://mplusfonts.github.io/) | SIL Open Font License。小型表示向け系列もあるが、現行bitmap配列への変換が必要 | 今回は不採用 |
 | [PixelMplus](https://github.com/itouhiro/PixelMplus) | M+系ライセンス、アウトラインTrueType。10/12 pixel向けで、埋込み配列への変換・表示確認が必要 | 今回は不採用 |
 | [Misaki](https://littlelimit.net/misaki.htm) | 8×8 bitmap、M+ Fonts license。現行7×14大文字と6 byte小文字へ変換する工程が必要 | 今回は不採用 |
-| [GNU Unifont](https://unifoundry.com/unifont/index.html) | GPL+例外 / SIL OFLのデュアルライセンス、8/16×16グリッド。容量と字形サイズが現行構造に不適合 | 不採用 |
+| [Izumi 16](https://unifoundry.com/japanese/) | パブリックドメイン、JIS X 0213:2004の16×16 BDF | `専`／`用`などに採用 |
+| [GNU Unifont](https://unifoundry.com/unifont/index.html) | GPL+例外 / SIL OFLのデュアルライセンス、8/16×16グリッド | 今回は不採用 |
 
-既存フォントは対象コード範囲、容量、表示基線、Apache-2.0帰属をすでに満たしています。別フォントへ交換すると、変換スクリプト、字形レビュー、ライセンス文書、容量評価を新たに必要とするため、今回の目的には現行フォントの継続が最小リスクです。
+既存フォントは継続使用し、プレースホルダだった`専`／`用`だけを、公開フォントの線構造を手掛かりに独立再構成しました。変換スクリプト、字形レビュー、ライセンス文書、容量評価を同じ変更単位で管理しています。
 
 ## 6. 検証と既知の未検証範囲
 

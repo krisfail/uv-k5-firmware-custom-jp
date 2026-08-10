@@ -51,7 +51,10 @@ ENABLE_EXTRA_UART_CMD           ?= 0
 ENABLE_FEAT_F4HWN               ?= 1
 ENABLE_FEAT_F4HWN_GAME          ?= 0
 ENABLE_FEAT_F4HWN_SCREENSHOT    ?= 0
-ENABLE_FEAT_F4HWN_SPECTRUM      ?= 1
+# The full F4HWN spectrum module is not part of the constrained K5 image.
+# Keep the symbol off as well so an ad-hoc build cannot retain dead spectrum
+# branches while app/spectrum.o is excluded below.
+ENABLE_FEAT_F4HWN_SPECTRUM      ?= 0
 ENABLE_FEAT_F4HWN_CHARGING_C    ?= 0
 ENABLE_FEAT_F4HWN_SLEEP         ?= 1
 ENABLE_FEAT_F4HWN_RESUME_STATE  ?= 1
@@ -63,7 +66,8 @@ ENABLE_FEAT_F4HWN_VOL           ?= 0
 ENABLE_FEAT_F4HWN_RESET_CHANNEL ?= 0
 ENABLE_FEAT_F4HWN_PMR           ?= 0
 ENABLE_FEAT_F4HWN_GMRS_FRS_MURS	?= 0
-ENABLE_FEAT_F4HWN_CA            ?= 1
+# F_LOCK is a transmit-region policy and has no receiver-side value here.
+ENABLE_FEAT_F4HWN_CA            ?= 0
 ENABLE_FEAT_F4HWN_DEBUG         ?= 0
 
 # ---- DEBUGGING ----
@@ -71,17 +75,37 @@ ENABLE_AM_FIX_SHOW_DATA         ?= 0
 ENABLE_AGC_SHOW_DATA            ?= 0
 ENABLE_UART_RW_BK_REGS          ?= 0
 
-# This Japanese target is receive-only. RF transmit features are deliberately
-# not Makefile options: source guards remain for upstream provenance, but this
-# build cannot opt those paths back in accidentally.
+# This Japanese target is receive-only. Keep every RF-transmit or maintenance
+# path explicitly disabled at this build boundary. Source guards remain for
+# upstream compatibility, but command-line overrides cannot re-enable them.
 override ENABLE_RX_ONLY                  := 1
 override ENABLE_SCAN_RANGES              := 1
+override ENABLE_AIRCOPY                  := 0
+override ENABLE_REGA                     := 0
+override ENABLE_TX1750                   := 0
+override ENABLE_TX_WHEN_AM               := 0
+override ENABLE_REDUCE_LOW_MID_TX_POWER  := 0
 override ENABLE_ALARM                     := 0
 override ENABLE_DTMF_CALLING              := 0
 override ENABLE_EXTRA_UART_CMD            := 0
 override ENABLE_F_CAL_MENU                := 0
 override ENABLE_UART_RW_BK_REGS           := 0
 override ENABLE_VOX                       := 0
+override ENABLE_FEAT_F4HWN_GAME           := 0
+override ENABLE_FEAT_F4HWN_SCREENSHOT     := 0
+override ENABLE_FEAT_F4HWN_SPECTRUM       := 0
+override ENABLE_FEAT_F4HWN_CHARGING_C     := 0
+override ENABLE_FEAT_F4HWN_RESCUE_OPS     := 0
+override ENABLE_FEAT_F4HWN_VOL            := 0
+override ENABLE_FEAT_F4HWN_RESET_CHANNEL  := 0
+override ENABLE_FEAT_F4HWN_PMR            := 0
+override ENABLE_FEAT_F4HWN_GMRS_FRS_MURS  := 0
+override ENABLE_FEAT_F4HWN_DEBUG          := 0
+override ENABLE_FEAT_F4HWN_CA             := 0
+override ENABLE_FEAT_F4HWN_RX_TX_TIMER    := 0
+override ENABLE_AGC_SHOW_DATA             := 0
+override ENABLE_BYP_RAW_DEMODULATORS      := 0
+override ENABLE_BAND_SCOPE                := 0
 
 # ---- COMPILER/LINKER OPTIONS ----
 ENABLE_CLANG                    ?= 0

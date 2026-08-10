@@ -203,7 +203,9 @@ const t_menu_item MenuList[] =
 #endif
     // hidden menu items from here on
     // enabled if pressing both the PTT and upper side button at power-on
+#ifndef ENABLE_RX_ONLY
     {"F Lock",      MENU_F_LOCK        },
+#endif
 #ifndef ENABLE_RX_ONLY
 #ifndef ENABLE_FEAT_F4HWN
     {"Tx 200",      MENU_200TX         }, // was "200TX"
@@ -225,7 +227,13 @@ const t_menu_item MenuList[] =
     {"",                              0xff               }  // end of list - DO NOT delete or move this this
 };
 
+#ifdef ENABLE_RX_ONLY
+// Keep the hidden-menu boot path available for EEPROM initialization and
+// battery calibration.  TX-related entries remain excluded above.
+const uint8_t FIRST_HIDDEN_MENU_ITEM = MENU_BATCAL;
+#else
 const uint8_t FIRST_HIDDEN_MENU_ITEM = MENU_F_LOCK;
+#endif
 
 const char gSubMenu_TXP[][6] =
 {

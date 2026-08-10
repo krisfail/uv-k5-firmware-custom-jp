@@ -13,7 +13,7 @@
 
 ## ビルドとホストテスト
 
-K5の容量を踏まえた機能採否は[docs/FEATURE_PRIORITY.ja.md](docs/FEATURE_PRIORITY.ja.md)を正とします。
+現行の機能採否と除外境界は[docs/FEATURE_AUDIT.ja.md](docs/FEATURE_AUDIT.ja.md)を正とします。容量判断の経過は[docs/FEATURE_PRIORITY.ja.md](docs/FEATURE_PRIORITY.ja.md)に残しています。実機確認は[docs/HARDWARE_TEST_PLAN.ja.md](docs/HARDWARE_TEST_PLAN.ja.md)を使います。
 
 ARM GNU Toolchain（`arm-none-eabi-gcc`）を用意し、リポジトリルートで実行します。
 
@@ -22,7 +22,7 @@ python -m unittest discover -s tests -p "test_*.py" -v
 make -j2
 ```
 
-Pythonと`crcmod`がある場合はpacked imageも生成されます。生成物は`wrx-jp`、`wrx-jp.bin`、環境が揃った場合は`wrx-jp.packed.bin`です。リリース相当の配布物は、版番号を付けて`release/wrx-jp-v4.3J5.packed.bin`へコピーします。K5はフラッシュ容量が厳しいため、機能追加のたびに`arm-none-eabi-size wrx-jp`で余裕を確認します。
+Pythonと`crcmod`がある場合はpacked imageも生成されます。生成物は`wrx-jp`、`wrx-jp.bin`、環境が揃った場合は`wrx-jp.packed.bin`です。UVTools2で書き込む対象はパック前の`wrx-jp.bin`です。`*.packed.bin`はpack形式に対応したツールまたは配布用に限って使用します。リリース相当の配布物は、版番号を付けて`release/wrx-jp-v4.3J5.packed.bin`へコピーします。K5はフラッシュ容量が厳しいため、機能追加のたびに`arm-none-eabi-size wrx-jp`で余裕を確認します。
 
 変更後は少なくともホストテスト、ビルド、`git diff --check`を実行します。テストはソース構造や境界を確認するもので、RF性能、LCDの見え方、実機書き込みの成功を保証しません。
 
@@ -67,13 +67,23 @@ python -X utf8 tools/render_bitmap_atlas.py `
 
 ### インタラクティブ編集
 
-`tools/font_editor.html`をブラウザで開き、`docs/assets/font-atlas/bitmap_atlas_inventory.json`を読み込むと、字形のドットをクリックまたはドラッグで編集できます。C初期化子のコピーとJSONパッチの保存ができます。HTTP経由で標準台帳を自動読込する場合は、リポジトリルートで次を実行してから表示します。
+`tools/font_editor.html`をブラウザで開き、`docs/assets/font-atlas/bitmap_atlas_inventory.json`を読み込むと、字形のドットを編集できます。左ドラッグは連続点灯／消灯、右ドラッグは消去、描画モードでは点灯・消灯を固定できます。マウス移動が速くてもセル間を補間し、1回のドラッグを1回のUndo単位として扱います。Space/Enterによるキーボード編集、C初期化子のコピー、JSONパッチの保存にも対応します。HTTP経由で標準台帳を自動読込する場合は、リポジトリルートで次を実行してから表示します。
 
 ```powershell
 python -m http.server 8765
 ```
 
 編集結果は自動的にCソースへ反映されません。出力を確認し、コードポイントとソース配列を手動で反映してください。
+
+### GitHub Pages
+
+`.github/workflows/pages.yml`は、`docs/`とルートの利用者向け文書をJekyllでHTML化し、GitHub Pagesへ公開します。ローカルでPages用の入力を確認する場合は次を実行します。
+
+```powershell
+python tools/prepare_github_pages.py --source docs --destination .pages-source
+```
+
+リポジトリのSettings → PagesでSourceを`GitHub Actions`に設定してください。`.pages-source/`と`_site/`は生成物であり、コミットしません。
 
 ## コミット、署名、実機確認
 

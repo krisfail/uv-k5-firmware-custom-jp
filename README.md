@@ -1,6 +1,6 @@
 # UV-K5 Japanese receive-only firmware
 
-[日本語版README](README.ja.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [Developer guide](DEVELOPMENT.md) | [CHIRP driver](tools/chirp/README.ja.md) | [Technical feature details](docs/FEATURES_TECHNICAL.ja.md) | [Feature priority](docs/FEATURE_PRIORITY.ja.md)
+[日本語版README](README.ja.md) | [操作・ビルドcheatsheet](CHEATSHEET.ja.md) | [Developer guide](DEVELOPMENT.md) | [CHIRP driver](tools/chirp/README.ja.md) | [Technical feature details](docs/FEATURES_TECHNICAL.ja.md) | [Feature audit](docs/FEATURE_AUDIT.ja.md) | [Hardware test plan](docs/HARDWARE_TEST_PLAN.ja.md) | [Documentation site](docs/index.md)
 
 This repository is the downstream fork [krisfail/uv-k5-firmware-custom-jp](https://github.com/krisfail/uv-k5-firmware-custom-jp), with [armel/uv-k5-firmware-custom](https://github.com/armel/uv-k5-firmware-custom) as its upstream. The upstream work builds on [Egzumer custom firmware](https://github.com/egzumer/uv-k5-firmware-custom), [OneOfEleven custom firmware](https://github.com/OneOfEleven/uv-k5-firmware-custom), the [fagci spectrum analyzer](https://github.com/fagci/uv-k5-firmware-fagci-mod/tree/refactor), and the original open firmware by [DualTachyon](https://github.com/DualTachyon/uv-k5-firmware).
 
@@ -20,10 +20,11 @@ The firmware is provided **as is**, without warranty. The maintainers are not re
 - Receive band presets, `W+`/`W`/`N`/`N-` bandwidths (25/20/12.5/6.25 kHz), `MAIN ONLY`/`DUAL RX`/`SINGLE`, memory banks, automatic squelch, AGC protection, and temporary scan skipping.
 - The `RXExt` radio menu item enables or disables those added receive features as a group; it defaults to enabled.
 - The Japanese font data is based on the work in [rainy-knight/uv-k5-jp](https://github.com/rainy-knight/uv-k5-jp).
+- The `専` and `用` large glyphs are independently reduced from the public-domain [Izumi 16](https://unifoundry.com/japanese/) bitmap font; see [font provenance](docs/FONT_SOURCES.ja.md).
 
 The receive-only UI omits TX power labels such as `LOW` and `HIGH`. Normal PTT operation is monitor control; only an unexpected request reaching the final TX guard shows `TX DISABLE`. Unsupported receive actions show a short reason such as `RXExt OFF`, `VFO ONLY`, `SCAN ACTIVE`, or `FM ONLY`.
 
-The detailed operation guide is in [README.ja.md](README.ja.md). The button and build command quick reference is in [CHEATSHEET.ja.md](CHEATSHEET.ja.md). Technical implementation details are in [docs/FEATURES_TECHNICAL.ja.md](docs/FEATURES_TECHNICAL.ja.md), and K5 capacity decisions are in [docs/FEATURE_PRIORITY.ja.md](docs/FEATURE_PRIORITY.ja.md). CHIRP-specific memory-map and upload guidance is in [tools/chirp/README.ja.md](tools/chirp/README.ja.md); legal attribution remains in `tools/chirp/NOTICE.md` and `tools/chirp/LICENSE.txt`.
+The detailed operation guide is in [README.ja.md](README.ja.md). The button and build command quick reference is in [CHEATSHEET.ja.md](CHEATSHEET.ja.md). Technical implementation details are in [docs/FEATURES_TECHNICAL.ja.md](docs/FEATURES_TECHNICAL.ja.md); current feature adoption and exclusions are consolidated in [docs/FEATURE_AUDIT.ja.md](docs/FEATURE_AUDIT.ja.md), with the hardware checklist in [docs/HARDWARE_TEST_PLAN.ja.md](docs/HARDWARE_TEST_PLAN.ja.md). CHIRP-specific memory-map and upload guidance is in [tools/chirp/README.ja.md](tools/chirp/README.ja.md); legal attribution remains in `tools/chirp/NOTICE.md` and `tools/chirp/LICENSE.txt`.
 
 This README is a user-facing overview. Development-specific source layout, change boundaries, atlas generation, validation, and release handling are collected in [DEVELOPMENT.md](DEVELOPMENT.md); AI-agent rules are kept in [AGENTS.md](AGENTS.md).
 

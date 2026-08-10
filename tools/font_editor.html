@@ -22,8 +22,9 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .status { min-height: 1.3em; margin-top: 10px; }
 .editor { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr); gap: 18px; align-items: start; }
 .grid-wrap { overflow: auto; border: 1px solid #ccd4dc; background: #e9eef2; padding: 12px; }
-#grid { display: grid; grid-template-columns: repeat(var(--cols), var(--cell)); width: max-content; background: #d7dee5; border: 1px solid #7e8b98; }
+#grid { display: grid; grid-template-columns: repeat(var(--cols), var(--cell)); width: max-content; background: #d7dee5; border: 1px solid #7e8b98; touch-action: none; user-select: none; overscroll-behavior: contain; }
 .cell { box-sizing: border-box; width: var(--cell); height: var(--cell); padding: 0; border: 1px solid #d3dbe2; border-radius: 0; background: #f9fbfc; }
+.cell { cursor: crosshair; }
 .cell.top-padding { background: #eaf2ff; }
 .cell.glyph-area { background: #fffbea; }
 .cell.bottom-padding { background: #eef1f4; }
@@ -68,6 +69,12 @@ textarea { box-sizing: border-box; width: 100%; min-height: 92px; resize: vertic
       <button id="undo" type="button" disabled>元に戻す</button>
       <button id="redo" type="button" disabled>やり直す</button>
       <button id="reset" type="button" disabled>読込時に戻す</button>
+      <label for="toolMode">描画モード</label>
+      <select id="toolMode" disabled>
+        <option value="toggle">先頭セルに合わせる</option>
+        <option value="on">点灯</option>
+        <option value="off">消灯</option>
+      </select>
       <label for="zoom">表示倍率</label>
       <input id="zoom" type="range" min="12" max="42" value="26">
       <span id="zoomValue">26px</span>
@@ -76,7 +83,7 @@ textarea { box-sizing: border-box; width: 100%; min-height: 92px; resize: vertic
 
   <section class="panel editor">
     <div>
-      <div class="hint">黒が点灯、白が消灯です。ドラッグでも連続編集できます。各バイトはOLED列で、bit 0が上側です。
+      <div class="hint">黒が点灯、白が消灯です。左ドラッグで連続編集、右ドラッグで消去できます。セルをキーボードで選択してSpace/Enterでも編集できます。各バイトはOLED列で、bit 0が上側です。
         <span class="legend"><span class="swatch"></span>点灯</span>
       </div>
       <div id="layoutGuide" class="layout-guide" aria-live="polite">
@@ -119,7 +126,10 @@ const state = {
   originalBytes: [],
   history: [],
   future: [],
-  drawing: false,
+  activePointerId: null,
+  activeEditBefore: null,
+  lastPoint: null,
+  editChanged: false,
   drawValue: false,
 };
 
@@ -139,8 +149,12 @@ const BIG_CELL_ROWS = 16;
 const BIG_TOP_PADDING = 2;
 const BIG_BOTTOM_PADDING = 4;
 function parseBytes(value) {
-  if (Array.isArray(value)) return value.map(Number);
-  return String(value || "").trim().split(/\s+/).filter(Boolean).map((part) => Number.parseInt(part, 16));
+  const parts = Array.isArray(value) ? value : String(value || "").match(/0x[0-9a-f]+|[0-9a-f]+/gi) || [];
+  const bytes = parts.map((part) => Array.isArray(value) ? Number(part) : Number.parseInt(part, 16));
+  if (bytes.some((byte) => !Number.isInteger(byte) || byte < 0 || byte > 0xff)) {
+    throw new Error("バイト列に0x00〜0xFF以外の値があります");
+  }
+  return bytes;
 }
 
 function selectedLayout() {
@@ -159,7 +173,7 @@ function displayZone(row, rows) {
 
 function setEnabled(enabled) {
   for (const id of ["arraySelect", "glyphSelect"]) $(id).disabled = !enabled;
-  for (const id of ["undo", "redo", "reset", "copyC", "downloadPatch"]) $(id).disabled = !enabled;
+  for (const id of ["undo", "redo", "reset", "toolMode", "copyC", "downloadPatch"]) $(id).disabled = !enabled;
 }
 
 function loadInventory(data) {
@@ -196,6 +210,10 @@ function populateGlyphs() {
 function selectGlyph() {
   state.currentGlyph = state.currentArray.glyphs[Number($("glyphSelect").value)];
   state.bytes = parseBytes(state.currentGlyph.bytes_hex);
+  const { width, pages } = selectedLayout();
+  if (state.bytes.length !== width * pages) {
+    throw new Error(`${state.currentArray.name} の ${state.currentGlyph.code} は ${width * pages}バイト必要です`);
+  }
   state.originalBytes = cloneBytes(state.bytes);
   state.history = [];
   state.future = [];
@@ -222,21 +240,124 @@ function setPixel(x, y, on) {
   return true;
 }
 
-function beginEdit() {
-  state.history.push(cloneBytes(state.bytes));
-  state.future = [];
+function cellAt(x, y) {
+  const { width, pages } = selectedLayout();
+  const rows = pages * 8;
+  if (x < 0 || x >= width || y < 0 || y >= rows) return null;
+  return $("grid").children[(y * width) + x] || null;
 }
 
-function editCell(x, y, recordHistory = false) {
-  if (recordHistory) beginEdit();
-  if (setPixel(x, y, state.drawValue)) {
-    const cell = $("grid").querySelector(`[data-x="${x}"][data-y="${y}"]`);
-    if (cell) {
-      cell.classList.toggle("on", state.drawValue);
-      cell.setAttribute("aria-label", `列${x + 1} 行${y + 1} ${state.drawValue ? "点灯" : "消灯"}`);
+function updateCell(x, y) {
+  const cell = cellAt(x, y);
+  if (!cell) return;
+  const on = pixelOn(x, y);
+  cell.classList.toggle("on", on);
+  cell.setAttribute("aria-pressed", String(on));
+  cell.setAttribute("aria-label", `列${x + 1} 行${y + 1} ${on ? "点灯" : "消灯"}`);
+}
+
+function beginPointerEdit() {
+  state.activeEditBefore = cloneBytes(state.bytes);
+  state.editChanged = false;
+  state.lastPoint = null;
+}
+
+function commitPointerEdit(cancel = false) {
+  const before = state.activeEditBefore;
+  if (before && state.editChanged) {
+    if (cancel) state.bytes = before;
+    else {
+      state.history.push(before);
+      state.future = [];
     }
-    renderOutputs();
   }
+  state.activePointerId = null;
+  state.activeEditBefore = null;
+  state.lastPoint = null;
+  state.editChanged = false;
+  render();
+}
+
+function applyPixel(x, y) {
+  if (!setPixel(x, y, state.drawValue)) return false;
+  state.editChanged = true;
+  updateCell(x, y);
+  return true;
+}
+
+function applyLine(from, to) {
+  const steps = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
+  let changed = false;
+  for (let step = 0; step <= steps; step += 1) {
+    const ratio = steps === 0 ? 0 : step / steps;
+    changed = applyPixel(Math.round(from.x + ((to.x - from.x) * ratio)), Math.round(from.y + ((to.y - from.y) * ratio))) || changed;
+  }
+  return changed;
+}
+
+function pointFromEvent(event) {
+  const firstCell = $("grid").firstElementChild;
+  if (!firstCell) return null;
+  const cellRect = firstCell.getBoundingClientRect();
+  if (!cellRect.width || !cellRect.height) return null;
+  const point = {
+    x: Math.floor((event.clientX - cellRect.left) / cellRect.width),
+    y: Math.floor((event.clientY - cellRect.top) / cellRect.height),
+  };
+  return cellAt(point.x, point.y) ? point : null;
+}
+
+function chooseDrawValue(event, point) {
+  if (event.button === 2 || $("toolMode").value === "off") return false;
+  if ($("toolMode").value === "on") return true;
+  return !pixelOn(point.x, point.y);
+}
+
+function handlePointerDown(event) {
+  if (event.button !== 0 && event.button !== 2) return;
+  const point = pointFromEvent(event);
+  if (!point) return;
+  event.preventDefault();
+  if (state.activePointerId !== null) commitPointerEdit(true);
+  state.activePointerId = event.pointerId;
+  beginPointerEdit();
+  state.drawValue = chooseDrawValue(event, point);
+  state.lastPoint = point;
+  applyLine(point, point);
+  $("grid").setPointerCapture?.(event.pointerId);
+  renderOutputs();
+}
+
+function handlePointerMove(event) {
+  if (state.activePointerId !== event.pointerId) return;
+  event.preventDefault();
+  const samples = event.getCoalescedEvents ? event.getCoalescedEvents() : [event];
+  for (const sample of samples) {
+    const point = pointFromEvent(sample);
+    if (!point) {
+      state.lastPoint = null;
+      continue;
+    }
+    applyLine(state.lastPoint || point, point);
+    state.lastPoint = point;
+  }
+  renderOutputs();
+}
+
+function editFromKeyboard(event) {
+  if (event.detail !== 0) return;
+  const cell = event.target.closest?.(".cell");
+  if (!cell) return;
+  event.preventDefault();
+  const x = Number(cell.dataset.x);
+  const y = Number(cell.dataset.y);
+  const before = cloneBytes(state.bytes);
+  const on = !pixelOn(x, y);
+  if (!setPixel(x, y, on)) return;
+  state.history.push(before);
+  state.future = [];
+  render();
+  cell.focus();
 }
 
 function renderGrid() {
@@ -254,17 +375,8 @@ function renderGrid() {
       cell.className = `cell ${zone}${pixelOn(x, y) ? " on" : ""}`;
       cell.dataset.x = String(x);
       cell.dataset.y = String(y);
+      cell.setAttribute("aria-pressed", String(pixelOn(x, y)));
       cell.setAttribute("aria-label", `列${x + 1} 行${y + 1} ${pixelOn(x, y) ? "点灯" : "消灯"}`);
-      cell.addEventListener("pointerdown", (event) => {
-        event.preventDefault();
-        state.drawing = true;
-        state.drawValue = !pixelOn(x, y);
-        editCell(x, y, true);
-        cell.setPointerCapture?.(event.pointerId);
-      });
-      cell.addEventListener("pointerenter", () => {
-        if (state.drawing) editCell(x, y);
-      });
       grid.appendChild(cell);
     }
   }
@@ -332,8 +444,11 @@ function redo() {
 }
 
 function reset() {
-  beginEdit();
+  const before = cloneBytes(state.bytes);
+  if (before.every((byte, index) => byte === state.originalBytes[index])) return;
   state.bytes = cloneBytes(state.originalBytes);
+  state.history.push(before);
+  state.future = [];
   render();
 }
 
@@ -364,13 +479,21 @@ $("inventoryFile").addEventListener("change", async (event) => {
   catch (error) { status(`読込失敗: ${error.message}`, true); }
 });
 $("loadDefault").addEventListener("click", async () => {
-  try {
-    const response = await fetch("../docs/assets/font-atlas/bitmap_atlas_inventory.json", { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    loadInventory(await response.json());
-  } catch (error) {
-    status("標準台帳を読めません。JSONファイルを選択するか、HTTPサーバー経由で開いてください。", true);
+  const paths = [
+    "../docs/assets/font-atlas/bitmap_atlas_inventory.json",
+    "../assets/font-atlas/bitmap_atlas_inventory.json",
+  ];
+  for (const path of paths) {
+    try {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) continue;
+      loadInventory(await response.json());
+      return;
+    } catch (_) {
+      // Try the next path; file:// and Pages have different roots.
+    }
   }
+  status("標準台帳を読めません。JSONファイルを選択するか、HTTPサーバー経由で開いてください。", true);
 });
 $("arraySelect").addEventListener("change", populateGlyphs);
 $("glyphSelect").addEventListener("change", selectGlyph);
@@ -379,11 +502,24 @@ $("redo").addEventListener("click", redo);
 $("reset").addEventListener("click", reset);
 $("copyC").addEventListener("click", copyC);
 $("downloadPatch").addEventListener("click", downloadPatch);
+$("grid").addEventListener("pointerdown", handlePointerDown);
+$("grid").addEventListener("pointermove", handlePointerMove);
+$("grid").addEventListener("pointerup", (event) => {
+  if (state.activePointerId === event.pointerId) commitPointerEdit();
+});
+$("grid").addEventListener("pointercancel", (event) => {
+  if (state.activePointerId === event.pointerId) commitPointerEdit(true);
+});
+$("grid").addEventListener("lostpointercapture", () => {
+  if (state.activePointerId !== null) commitPointerEdit();
+});
+$("grid").addEventListener("click", editFromKeyboard);
+$("grid").addEventListener("contextmenu", (event) => event.preventDefault());
 $("zoom").addEventListener("input", () => {
   $("zoomValue").textContent = `${$("zoom").value}px`;
   if (state.currentGlyph) renderGrid();
 });
-window.addEventListener("pointerup", () => { state.drawing = false; });
+window.addEventListener("blur", () => { if (state.activePointerId !== null) commitPointerEdit(true); });
 </script>
 </body>
 </html>

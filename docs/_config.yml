@@ -1,0 +1,9 @@
+---
+---
+
+# This file documents the Pages source configuration for local Jekyll users.
+# CI generates the effective configuration in .pages-source.
+title: WRX-JP documentation
+markdown: kramdown
+kramdown:
+  input: GFM

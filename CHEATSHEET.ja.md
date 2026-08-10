@@ -72,12 +72,18 @@ make -j2
 - `release/wrx-jp-v4.3J5.packed.bin`: リリース相当イメージ
 - `wrx-jp`: ELF
 
+UVTools2で書き込むのは`wrx-jp.bin`です。`*.packed.bin`はpack対応ツール用です。
+
 作り直し:
 
 ```powershell
 make clean
 make -j2
 ```
+
+## 隠しメニュー
+
+電源OFF時に`PTT`と上側サイドキーを同時に押しながら電源を入れます。RX-only版では送信項目はなく、`BatCal`、`BatTyp`、`Reset`などの保守項目を開けます。`Reset`の前にEEPROMとcalibrationをバックアップしてください。
 
 ## 書き込み前チェック
 

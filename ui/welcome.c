@@ -146,7 +146,7 @@ void UI_DisplayWelcome(void)
             }
         }
 
-        UI_PrintString(WelcomeString0, 0, 127, 0, 10);
+        UI_PrintString(WelcomeString0, 0, 127, 0, 8);
         UI_PrintString(WelcomeString1, 0, 127, 2, 10);
 
 #ifdef ENABLE_FEAT_F4HWN

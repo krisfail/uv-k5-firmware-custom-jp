@@ -38,7 +38,10 @@ class FontAtlasTests(unittest.TestCase):
         assert glyphs is not None
         self.assertEqual([glyph["code"] for glyph in glyphs], list(range(0x21, 0xE0)))
         self.assertEqual(len(glyphs), len(array.values) // 14)
-        self.assertEqual(glyphs[0x98 - 0x21]["label"], "専 (project-authored)")
+        self.assertEqual(
+            glyphs[0x98 - 0x21]["label"],
+            "専 (Izumi 16-derived, low-resolution reconstruction)",
+        )
         self.assertFalse(glyphs[0x9A - 0x21]["occupied"])
 
     def test_small_japanese_font_materializes_sparse_slots(self) -> None:
@@ -49,13 +52,13 @@ class FontAtlasTests(unittest.TestCase):
         self.assertEqual([glyph["code"] for glyph in glyphs], list(range(0x80, 0xE0)))
         self.assertFalse(glyphs[0x9A - 0x80]["occupied"])
 
-    def test_project_authored_large_glyphs_have_stable_readable_bitmaps(self) -> None:
+    def test_open_font_derived_large_glyphs_have_stable_readable_bitmaps(self) -> None:
         array = self.parse_array("gFontBig")
         glyphs = array.glyphs
         assert glyphs is not None
         expected = {
-            0x98: bytes.fromhex("04 88 50 20 50 88 04 01 00 00 00 00 00 01"),
-            0x99: bytes.fromhex("fc 54 54 fc 54 54 fc 0f 00 00 03 00 08 0f"),
+            0x98: bytes.fromhex("48 e8 58 fc 58 e8 48 02 03 02 07 02 03 02"),
+            0x99: bytes.fromhex("00 fc 24 fc 24 fc 00 06 01 06 01 06 01 06"),
         }
         for code, bitmap in expected.items():
             glyph = glyphs[code - 0x21]
@@ -79,7 +82,10 @@ class FontAtlasTests(unittest.TestCase):
         report = self.atlas.make_markdown_inventory(arrays)
         self.assertIn("# フォント一覧", report)
         self.assertIn("| `gFontBig` | font |", report)
-        self.assertIn("| `0x98` | 専 (project-authored) | 使用中 |", report)
+        self.assertIn(
+            "| `0x98` | 専 (Izumi 16-derived, low-resolution reconstruction) | 使用中 |",
+            report,
+        )
 
     def test_svg_escapes_ascii_glyph_labels(self) -> None:
         array = self.parse_array("gFontBig")

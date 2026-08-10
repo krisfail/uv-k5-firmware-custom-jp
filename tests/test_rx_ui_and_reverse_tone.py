@@ -29,10 +29,13 @@ class ReceiveUiAndToneTests(unittest.TestCase):
         self.assertIn("UI_RxOnlyWelcome0", welcome)
         self.assertIn("POWER_ON_DISPLAY_MODE_MESSAGE", welcome)
         self.assertIn("POWER_ON_DISPLAY_MODE_ALL", welcome)
-        self.assertIn("code >= 0x98 && code <= 0x99", read("ui/helper.c"))
-        self.assertIn("0x98 専 (project-authored)", font)
-        self.assertIn("0x99 用 (project-authored)", font)
-        self.assertIn("0x00,0x04,0x88,0x50,0x20,0x50,0x88,0x04,0x00,0x00", font)
+        self.assertIn("UI_PrintString(WelcomeString0, 0, 127, 0, 8);", welcome)
+        self.assertNotIn("code >= 0x98 && code <= 0x99", read("ui/helper.c"))
+        self.assertIn("0x98 専 (Izumi 16-derived, low-resolution reconstruction)", font)
+        self.assertIn("0x99 用 (Izumi 16-derived, low-resolution reconstruction)", font)
+        self.assertIn("0x80 //受", font)
+        self.assertIn("0x81 //信", font)
+        self.assertIn("0x10,0x90,0x50,0x50,0xfc,0x50,0x50,0xd0,0x10,0x10", font)
 
     def test_reverse_ctcss_is_stored_displayed_and_inverted_at_runtime(self) -> None:
         dcs = read("dcs.h")

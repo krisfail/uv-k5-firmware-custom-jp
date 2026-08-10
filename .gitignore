@@ -14,3 +14,6 @@ f4hwn.*
 !archive/f4hwn*
 wrx-jp
 wrx-jp.*
+.pages-source/
+_site/
+/tmp

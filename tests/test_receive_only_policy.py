@@ -158,11 +158,32 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
             "ENABLE_REGA",
             "ENABLE_FEAT_F4HWN_RX_TX_TIMER",
         ):
-            self.assertNotRegex(
+            self.assertRegex(
                 makefile,
-                re.compile(rf"^\s*(?:override\s+)?{definition}\s", re.MULTILINE),
+                re.compile(rf"^override\s+{definition}\s*:=\s*0$", re.MULTILINE),
             )
-        self.assertIn("source guards remain for upstream provenance", makefile)
+        for definition in (
+            "ENABLE_AIRCOPY",
+            "ENABLE_FEAT_F4HWN_GAME",
+            "ENABLE_FEAT_F4HWN_SCREENSHOT",
+            "ENABLE_FEAT_F4HWN_SPECTRUM",
+            "ENABLE_FEAT_F4HWN_CA",
+        ):
+            self.assertRegex(
+                makefile,
+                re.compile(rf"^override\s+{definition}\s*:=\s*0$", re.MULTILINE),
+            )
+        self.assertIn("Source guards remain for", makefile)
+        self.assertIn("upstream compatibility", makefile)
+
+    def test_receive_only_hidden_menu_excludes_tx_but_keeps_batcal(self) -> None:
+        menu = _read("ui/menu.c")
+        main = _read("main.c")
+        self.assertIn('#ifndef ENABLE_RX_ONLY\n    {"F Lock"', menu)
+        self.assertIn('{"BatCal",      MENU_BATCAL', menu)
+        self.assertIn("FIRST_HIDDEN_MENU_ITEM = MENU_BATCAL", menu)
+        self.assertIn("if (BootMode == BOOT_MODE_F_LOCK)", main)
+        self.assertNotIn("#ifndef ENABLE_RX_ONLY\n    if (BootMode == BOOT_MODE_F_LOCK)", main)
 
     def test_ptt_toggles_monitor_only_on_press(self) -> None:
         body = _function_body(_read("app/generic.c"), "GENERIC_Key_PTT")
@@ -206,7 +227,8 @@ class ReceiveOnlyPolicyTest(unittest.TestCase):
         main = _read("main.c")
 
         self.assertIn('{"F Lock",      MENU_F_LOCK        },', menu)
-        self.assertIn("UI_MENU_GetMenuIdx(MENU_F_LOCK)", main)
+        self.assertIn("UI_MENU_GetMenuIdx(FIRST_HIDDEN_MENU_ITEM)", main)
+        self.assertNotIn("UI_MENU_GetMenuIdx(MENU_F_LOCK)", main)
         self.assertNotRegex(
             main,
             re.compile(r"gMenuCursor\s*=\s*(?:67|68)\s*;"),
