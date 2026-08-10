@@ -48,7 +48,7 @@ textarea { box-sizing: border-box; width: 100%; min-height: 92px; resize: vertic
 <body>
 <main>
   <h1>WRX-JP フォント・ドット編集</h1>
-  <p>フォント台帳の1字形をクリック編集し、ファームウェアへ貼り付けるC初期化子を生成します。ソースは自動変更しません。</p>
+  <p>フォント台帳の1字形をクリック編集し，ファームウェアへ貼り付けるC初期化子を生成します．ソースは自動変更しません．</p>
 
   <section class="panel">
     <div class="toolbar">
@@ -56,8 +56,8 @@ textarea { box-sizing: border-box; width: 100%; min-height: 92px; resize: vertic
       <input id="inventoryFile" type="file" accept=".json,application/json">
       <button id="loadDefault" type="button">標準台帳を読み込む</button>
     </div>
-    <div class="hint">リポジトリ直下でローカルHTTPサーバーを起動した場合は「標準台帳を読み込む」が使えます。file://で開く場合はJSONを選択してください。</div>
-    <div id="status" class="status" role="status">台帳JSONを読み込んでください。</div>
+    <div class="hint">リポジトリ直下でローカルHTTPサーバーを起動した場合は「標準台帳を読み込む」が使えます．file://で開く場合はJSONを選択してください．</div>
+    <div id="status" class="status" role="status">台帳JSONを読み込んでください．</div>
   </section>
 
   <section class="panel">
@@ -83,7 +83,7 @@ textarea { box-sizing: border-box; width: 100%; min-height: 92px; resize: vertic
 
   <section class="panel editor">
     <div>
-      <div class="hint">黒が点灯、白が消灯です。左ドラッグで連続編集、右ドラッグで消去できます。セルをキーボードで選択してSpace/Enterでも編集できます。各バイトはOLED列で、bit 0が上側です。
+      <div class="hint">黒が点灯，白が消灯です．左ドラッグで連続編集，右ドラッグで消去できます．セルをキーボードで選択してSpace/Enterでも編集できます．各バイトはOLED列で，bit 0が上側です．
         <span class="legend"><span class="swatch"></span>点灯</span>
       </div>
       <div id="layoutGuide" class="layout-guide" aria-live="polite">
@@ -190,7 +190,7 @@ function loadInventory(data) {
   $("arraySelect").value = String(preferredArray >= 0 ? preferredArray : 0);
   populateGlyphs();
   setEnabled(true);
-  status(`${candidates.length}個のフォント配列を読み込みました。`);
+  status(`${candidates.length}個のフォント配列を読み込みました．`);
 }
 
 function populateGlyphs() {
@@ -456,10 +456,10 @@ async function copyC() {
   const output = $("cOutput").value;
   try {
     await navigator.clipboard.writeText(output);
-    status("C初期化子をクリップボードへコピーしました。");
+    status("C初期化子をクリップボードへコピーしました．");
   } catch (_) {
     $("cOutput").select();
-    status("コピー権限がないため、C初期化子を選択しました。Ctrl+Cでコピーしてください。", true);
+    status("コピー権限がないため，C初期化子を選択しました．Ctrl+Cでコピーしてください．", true);
   }
 }
 
@@ -493,7 +493,7 @@ $("loadDefault").addEventListener("click", async () => {
       // Try the next path; file:// and Pages have different roots.
     }
   }
-  status("標準台帳を読めません。JSONファイルを選択するか、HTTPサーバー経由で開いてください。", true);
+  status("標準台帳を読めません．JSONファイルを選択するか，HTTPサーバー経由で開いてください．", true);
 });
 $("arraySelect").addEventListener("change", populateGlyphs);
 $("glyphSelect").addEventListener("change", selectGlyph);
@@ -523,3 +523,4 @@ window.addEventListener("blur", () => { if (state.activePointerId !== null) comm
 </script>
 </body>
 </html>
+

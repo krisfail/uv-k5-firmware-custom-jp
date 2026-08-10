@@ -1,6 +1,6 @@
 # WRX-JP ドキュメント
 
-日本語・受信専用ファームウェアの利用者向け案内、開発資料、フォント資料をまとめています。
+日本語・受信専用ファームウェアの利用者向け案内，開発資料，フォント資料をまとめています．
 
 ## 利用者向け
 
@@ -25,4 +25,5 @@
 - [bitmap atlas SVG](assets/font-atlas/bitmap_atlas.svg)
 - [bitmap atlas inventory JSON](assets/font-atlas/bitmap_atlas_inventory.json)
 
-このサイトはGitHub Actionsで`docs/`とルートの利用者向け文書から自動生成されます。
+このサイトはGitHub Actionsで`docs/`とルートの利用者向け文書から自動生成されます．
+

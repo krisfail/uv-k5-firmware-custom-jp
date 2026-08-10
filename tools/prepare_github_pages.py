@@ -40,7 +40,7 @@ LAYOUT = """<!doctype html>
     <nav class="breadcrumb"><a href="{{ '/' | relative_url }}">ドキュメント一覧</a> / {{ page.title | escape }}</nav>
     <article>{{ content }}</article>
   </main>
-  <footer class="site-footer">このページはリポジトリのドキュメントから自動生成されています。</footer>
+  <footer class="site-footer">このページはリポジトリのドキュメントから自動生成されています．</footer>
 </body>
 </html>
 """
@@ -169,3 +169,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

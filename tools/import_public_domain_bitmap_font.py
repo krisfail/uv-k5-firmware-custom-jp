@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Convert selected public-domain 16x16 BDF glyphs to the LCD cell format.
 
-The firmware stores large glyphs as columns split across two OLED pages.  This
-tool deliberately has no dependency on the reverse-engineering handoff or on
-the firmware source: it reads a Unicode/JIS BDF file and emits a deterministic
+The firmware stores large glyphs as columns split across two OLED pages. 
+This code reads a Unicode/JIS BDF file and emits a deterministic
 C initializer for the requested display width.
 """
 

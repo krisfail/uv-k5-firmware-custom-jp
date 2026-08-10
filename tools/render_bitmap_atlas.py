@@ -406,9 +406,9 @@ def make_markdown_inventory(arrays: list[Array]) -> str:
     lines = [
         "# フォント一覧",
         "",
-        "この一覧は `tools/render_bitmap_atlas.py` が現行Cソースから生成したものです。",
-        "コードはファームウェア内部の1バイトコードであり、Unicodeコードポイントではありません。",
-        "字形の元バイト列は同じ出力ディレクトリの `bitmap_atlas_inventory.json` を参照してください。",
+        "この一覧は `tools/render_bitmap_atlas.py` が現行Cソースから生成したものです．",
+        "コードはファームウェア内部の1バイトコードであり，Unicodeコードポイントではありません．",
+        "字形の元バイト列は同じ出力ディレクトリの `bitmap_atlas_inventory.json` を参照してください．",
         "",
         "## 配列サマリー",
         "",
@@ -525,3 +525,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
