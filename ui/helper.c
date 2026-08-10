@@ -70,10 +70,25 @@ void UI_PrintStringBuffer(const char *pString, uint8_t * buffer, uint32_t char_w
     const size_t Length = strlen(pString);
     const unsigned int char_spacing = char_width + 1;
     for (size_t i = 0; i < Length; i++) {
-        const unsigned int index = pString[i] - ' ' - 1;
-        if (pString[i] > ' ' && pString[i] < 127) {
+        const uint8_t code = (uint8_t)pString[i];
+        const bool is_small_font =
+            font == (const uint8_t *)gFontSmall
+#ifdef ENABLE_SMALL_BOLD
+            || font == (const uint8_t *)gFontSmallBold
+#endif
+            ;
+        const bool is_extended_small =
+            is_small_font &&
+            code >= 0x7F && code <= FONT_CODE_MAX;
+
+        if (code > ' ' && (code < 127 || is_extended_small)) {
             const uint32_t offset = i * char_spacing + 1;
-            memcpy(buffer + offset, font + index * char_width, char_width);
+            if (is_extended_small)
+                memcpy(buffer + offset, gFontSmallJapanese[code - 0x7F], char_width);
+            else {
+                const unsigned int index = code - ' ' - 1;
+                memcpy(buffer + offset, font + index * char_width, char_width);
+            }
         }
     }
 }
@@ -89,11 +104,41 @@ void UI_PrintString(const char *pString, uint8_t Start, uint8_t End, uint8_t Lin
     for (i = 0; i < Length; i++)
     {
         const unsigned int ofs   = (unsigned int)Start + (i * Width);
-        if (pString[i] > ' ' && pString[i] < 127)
+        const uint8_t code = (uint8_t)pString[i];
+        if (code > ' ' && code <= FONT_CODE_MAX)
         {
-            const unsigned int index = pString[i] - ' ' - 1;
+            const unsigned int index = code - ' ' - 1;
+            /* ASCII and Japanese large glyphs now share the same cell and
+             * baseline; the source tables already contain display rows. */
             memcpy(gFrameBuffer[Line + 0] + ofs, &gFontBig[index][0], 7);
             memcpy(gFrameBuffer[Line + 1] + ofs, &gFontBig[index][7], 7);
+        }
+    }
+}
+
+void UI_PrintStringJapaneseExtraLarge(const char *pString, uint8_t Start, uint8_t End, uint8_t Line, uint8_t Width)
+{
+    const size_t Length = strlen(pString);
+
+    if (End > Start)
+        Start += (((End - Start) - (Length * Width)) + 1) / 2;
+
+    for (size_t i = 0; i < Length; i++)
+    {
+        const uint8_t code = (uint8_t)pString[i];
+        const unsigned int ofs = (unsigned int)Start + (i * Width);
+        for (size_t glyph = 0; glyph < FONT_JP_EXTRA_LARGE_GLYPHS; glyph++)
+        {
+            if (gFontJapaneseExtraLargeCodes[glyph] == code)
+            {
+                memcpy(gFrameBuffer[Line + 0] + ofs,
+                       gFontJapaneseExtraLarge[glyph],
+                       FONT_JP_EXTRA_LARGE_WIDTH);
+                memcpy(gFrameBuffer[Line + 1] + ofs,
+                       gFontJapaneseExtraLarge[glyph] + FONT_JP_EXTRA_LARGE_WIDTH,
+                       FONT_JP_EXTRA_LARGE_WIDTH);
+                break;
+            }
         }
     }
 }
@@ -344,6 +389,12 @@ void UI_DisplayPopup(const char *string)
     // DrawRectangle(9,9, 118,38, true);
     UI_PrintString(string, 9, 118, 2, 8);
     UI_PrintStringSmallNormal("Press EXIT", 9, 118, 6);
+}
+
+void UI_DisplayUnavailable(const char *string)
+{
+    UI_DisplayPopup(string);
+    ST7565_BlitFullScreen();
 }
 
 void UI_DisplayClear()

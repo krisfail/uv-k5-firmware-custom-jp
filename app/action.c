@@ -43,7 +43,10 @@
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 #ifdef ENABLE_REGA
-    #include "app/rega.h"
+#include "app/rega.h"
+#endif
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
 #endif
 
 #if defined(ENABLE_FMRADIO)
@@ -495,6 +498,15 @@ void ACTION_Update(void)
 
 void ACTION_RxMode(void)
 {
+#ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_SetSingleVfo(false);
+    RX_FEATURE_STATE_Save();
+    gEeprom.DUAL_WATCH = !gEeprom.DUAL_WATCH;
+    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+    ACTION_Update();
+    return;
+#endif
+
     static bool cycle = 0;
 
     switch(cycle) {
@@ -533,16 +545,37 @@ void ACTION_MainOnly(void)
             break;
     }
 
+#ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_SetSingleVfo(false);
+    RX_FEATURE_STATE_Save();
+    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+#endif
+
     ACTION_Update();
 }
 
 void ACTION_Ptt(void)
 {
+#ifdef ENABLE_RX_ONLY
+    gSetting_set_ptt_session = 0;
+    return;
+#endif
+
     gSetting_set_ptt_session = !gSetting_set_ptt_session;
 }
 
 void ACTION_Wn(void)
 {
+#ifdef ENABLE_RX_ONLY
+    VFO_Info_t *const pVfo = FUNCTION_IsRx() ? gRxVfo : gTxVfo;
+    pVfo->CHANNEL_BANDWIDTH = RADIO_NextBandwidth(pVfo->CHANNEL_BANDWIDTH);
+    pVfo->WIDE_PLUS = pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE_PLUS;
+    BK4819_SetFilterBandwidth(
+        RADIO_BandwidthToFilter(pVfo->CHANNEL_BANDWIDTH),
+        RADIO_BandwidthUsesWidePlusFilter(pVfo->CHANNEL_BANDWIDTH));
+    gRequestSaveChannel = 1;
+    return;
+#endif
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
         bool narrower = 0;
         if (FUNCTION_IsRx())

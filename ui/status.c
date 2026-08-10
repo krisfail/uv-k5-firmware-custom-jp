@@ -21,6 +21,9 @@
     #include "app/fm.h"
 #endif
 #include "app/scanner.h"
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_scan_skip.h"
+#endif
 #include "bitmaps.h"
 #include "driver/keyboard.h"
 #include "driver/st7565.h"
@@ -123,6 +126,15 @@ void UI_DisplayStatus()
         }
     }
     x += 10;  // font character width
+
+#ifdef ENABLE_RX_ONLY
+    if (gScanStateDir != SCAN_OFF && RX_SCAN_SKIP_Count() > 0) {
+        sprintf(str, "%02u", (unsigned)RX_SCAN_SKIP_Count());
+        UI_PrintStringSmallBufferNormal(str, line + x);
+        x += 14;
+        x1 = MAX(x1, x);
+    }
+#endif
 
     #ifdef ENABLE_FEAT_F4HWN_DEBUG
         // Only for debug

@@ -41,13 +41,15 @@ enum
     MENU_OFFSET,
     MENU_TOT,
     MENU_W_N,
+#ifdef ENABLE_RX_ONLY
+    MENU_RX_EXT,
+    MENU_RX_BANK,
+    MENU_RX_BANK_SET,
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     MENU_SCR,
 #endif
     MENU_BCL,
-#ifdef ENABLE_FEAT_F4HWN
-    MENU_TX_LOCK, 
-#endif
     MENU_MEM_CH,
     MENU_DEL_CH,
     MENU_MEM_NAME,
@@ -166,11 +168,19 @@ extern const t_menu_item MenuList[];
 
 extern const char        gSubMenu_TXP[8][6];
 extern const char        gSubMenu_SFT_D[3][4];
+#ifdef ENABLE_RX_ONLY
+extern const char        gSubMenu_W_N[4][7];
+#else
 extern const char        gSubMenu_W_N[2][7];
+#endif
 extern const char        gSubMenu_OFF_ON[2][4];
 extern const char        gSubMenu_NA[4];
 extern const char        gSubMenu_TOT[11][7];
-extern const char* const gSubMenu_RXMode[4];
+extern const char* const gSubMenu_RXMode[];
+#ifdef ENABLE_RX_ONLY
+extern const char        gSubMenu_RXBank[9][4];
+extern const char        gSubMenu_RXBankSet[9][5];
+#endif
 
 #ifdef ENABLE_VOICE
     extern const char    gSubMenu_VOICE[3][4];
@@ -229,6 +239,7 @@ extern char              edit[17];
 extern int               edit_index;
 
 void UI_DisplayMenu(void);
+void UI_MENU_TimeSlice500ms(void);
 int UI_MENU_GetCurrentMenuId();
 uint8_t UI_MENU_GetMenuIdx(uint8_t id);
 

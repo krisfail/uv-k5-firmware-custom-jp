@@ -5,10 +5,15 @@ firmware
 /firmware.bin
 /compiled-firmware
 .cache
+__pycache__/
 compile_commands.json
 .vscode
-/docs
 k5_eeprom.raw
 f4hwn
 f4hwn.*
 !archive/f4hwn*
+wrx-jp
+wrx-jp.*
+.pages-source/
+_site/
+/tmp

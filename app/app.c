@@ -37,6 +37,10 @@
 #include "app/main.h"
 #include "app/menu.h"
 #include "app/scanner.h"
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
+    #include "app/rx_scan_skip.h"
+#endif
 #ifdef ENABLE_UART
     #include "app/uart.h"
 #endif
@@ -180,6 +184,13 @@ static void CheckForIncoming(void)
     }
 }
 
+static bool APP_CtcssMatch(void)
+{
+    return gCurrentCodeType == CODE_TYPE_REVERSE_CONTINUOUS_TONE
+        ? g_CTCSS_Lost
+        : !g_CTCSS_Lost;
+}
+
 static void HandleIncoming(void)
 {
     if (!g_SquelchLost) {   // squelch is closed
@@ -194,6 +205,7 @@ static void HandleIncoming(void)
         return;
     }
 
+    const bool ctcss_match = APP_CtcssMatch();
     bool bFlag = (gScanStateDir == SCAN_OFF && gCurrentCodeType == CODE_TYPE_OFF);
 
 #ifdef ENABLE_NOAA
@@ -203,7 +215,9 @@ static void HandleIncoming(void)
     }
 #endif
 
-    if (g_CTCSS_Lost && gCurrentCodeType == CODE_TYPE_CONTINUOUS_TONE) {
+    if (!ctcss_match &&
+        (gCurrentCodeType == CODE_TYPE_CONTINUOUS_TONE ||
+         gCurrentCodeType == CODE_TYPE_REVERSE_CONTINUOUS_TONE)) {
         bFlag       = true;
         gFoundCTCSS = false;
     }
@@ -273,6 +287,7 @@ static void HandleReceive(void)
             break;
 
         case CODE_TYPE_CONTINUOUS_TONE:
+        case CODE_TYPE_REVERSE_CONTINUOUS_TONE:
             if (gFoundCTCSS && gFoundCTCSSCountdown_10ms == 0)
             {
                 gFoundCTCSS = false;
@@ -316,7 +331,8 @@ static void HandleReceive(void)
                     break;
 
                 case CODE_TYPE_CONTINUOUS_TONE:
-                    if (g_CTCSS_Lost)
+                case CODE_TYPE_REVERSE_CONTINUOUS_TONE:
+                    if (!APP_CtcssMatch())
                     {
                         gFoundCTCSS = false;
                     }
@@ -1363,6 +1379,10 @@ void APP_TimeSlice10ms(void)
     }
 #endif
 
+#ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_ProcessAgcGuard();
+#endif
+
 #ifdef ENABLE_UART
     if (UART_IsCommandAvailable()) {
         __disable_irq();
@@ -1532,6 +1552,7 @@ void cancelUserInputModes(void)
 void APP_TimeSlice500ms(void)
 {
     gNextTimeslice_500ms = false;
+    UI_MENU_TimeSlice500ms();
     bool exit_menu = false;
 
     // Skipped authentic device check
@@ -2025,6 +2046,10 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         }
     }
 
+#ifdef ENABLE_RX_ONLY
+    const bool wasFKeyPressed = gWasFKeyPressed;
+#endif
+
 #ifdef ENABLE_FEAT_F4HWN // For F + SIDE1 or F + SIDE2
     if (gWasFKeyPressed && (Key == KEY_PTT || Key == KEY_EXIT)) { 
 #else
@@ -2109,6 +2134,26 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         }
 #endif
     }
+#ifdef ENABLE_RX_ONLY
+    else if (Key == KEY_SIDE1 &&
+             !wasFKeyPressed &&
+             gScanStateDir != SCAN_OFF &&
+             gScreenToDisplay == DISPLAY_MAIN &&
+             !bKeyHeld && bKeyPressed) {
+        switch (RX_SCAN_SKIP_Add(gRxVfo->freq_config_RX.Frequency)) {
+            case RX_SCAN_SKIP_ADDED:
+                gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+                break;
+
+            case RX_SCAN_SKIP_DUPLICATE:
+            case RX_SCAN_SKIP_FULL:
+                gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+                break;
+        }
+
+        gUpdateStatus = true;
+    }
+#endif
 #ifdef ENABLE_FEAT_F4HWN // For F + SIDE1 or F + SIDE2
     else if (gWasFKeyPressed && (Key == KEY_SIDE1 || Key == KEY_SIDE2)) {
         ProcessKeysFunctions[gScreenToDisplay](Key, bKeyPressed, bKeyHeld);

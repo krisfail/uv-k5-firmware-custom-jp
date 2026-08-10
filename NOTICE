@@ -1,0 +1,42 @@
+WRX-JP Japanese receive-only firmware for the Quansheng UV-K5
+================================================================
+
+This product includes software originally developed by Dual Tachyon
+for the Quansheng UV-K5 open-source firmware project:
+
+  https://github.com/DualTachyon/uv-k5-firmware
+
+This product includes work derived from Egzumer's UV-K5 custom
+firmware and from the upstream armel/F4HWN projects:
+
+  https://github.com/egzumer/uv-k5-firmware-custom
+  https://github.com/armel/uv-k5-firmware-custom
+
+Additional attribution notices
+------------------------------
+
+This product includes contributions and/or derived work from, among
+others:
+
+  Dual Tachyon
+  OneOfEleven
+  fagci
+  Egzumer
+  Armel / F4HWN
+
+The Japanese LCD glyph data includes material adapted from
+rainy-knight/uv-k5-jp, used under the Apache License, Version 2.0:
+
+  https://github.com/rainy-knight/uv-k5-jp
+
+The receive-only welcome glyphs and the replacement glyphs for 専 and 用
+are independently reduced from the public-domain Izumi 16 bitmap font,
+distributed by Unifoundry:
+
+  https://unifoundry.com/japanese/
+
+The main firmware is licensed under the Apache License, Version 2.0.
+See LICENSE for the full license text. This NOTICE file is provided
+for attribution purposes and does not modify the terms of any license.
+
+Attribution does not imply endorsement by any named contributor.

@@ -31,6 +31,9 @@
 #include "../helper/battery.h"
 #include "../misc.h"
 #include "../settings.h"
+#ifdef ENABLE_RX_ONLY
+    #include "../app/rx_feature_state.h"
+#endif
 #ifdef ENABLE_FEAT_F4HWN
     #include "../version.h"
 #endif
@@ -43,85 +46,113 @@
 const t_menu_item MenuList[] =
 {
 //   text,          menu ID
-    {"Step",        MENU_STEP          },
+    {{0xBD, 0xC3, 0xAF, 0xCC, 0xDF}, MENU_STEP}, // ステップ
+#ifndef ENABLE_RX_ONLY
     {"Power",       MENU_TXP           }, // was "TXP"
-    {"RxDCS",       MENU_R_DCS         }, // was "R_DCS"
-    {"RxCTCS",      MENU_R_CTCS        }, // was "R_CTCS"
+#endif
+    {{0x80, 0x81, 'D', 'C', 'S'}, MENU_R_DCS}, // 受信DCS
+    {{0x80, 0x81, 'C', 'T', 'C', 'S'}, MENU_R_CTCS}, // 受信CTCS
+#ifndef ENABLE_RX_ONLY
     {"TxDCS",       MENU_T_DCS         }, // was "T_DCS"
     {"TxCTCS",      MENU_T_CTCS        }, // was "T_CTCS"
     {"TxODir",      MENU_SFT_D         }, // was "SFT_D"
     {"TxOffs",      MENU_OFFSET        }, // was "OFFSET"
+#endif
     {"W/N",         MENU_W_N           },
+#ifdef ENABLE_RX_ONLY
+    {"RXExt",       MENU_RX_EXT       },
+    {"Bank",        MENU_RX_BANK       },
+    {"BnkSet",      MENU_RX_BANK_SET   },
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     {"Scramb",      MENU_SCR           }, // was "SCR"
 #endif
+#ifndef ENABLE_RX_ONLY
     {"BusyCL",      MENU_BCL           }, // was "BCL"
-    {"Compnd",      MENU_COMPAND       },
-    {"Mode",        MENU_AM            }, // was "AM"
-#ifdef ENABLE_FEAT_F4HWN
-    {"TXLock",      MENU_TX_LOCK       }, 
 #endif
-    {"ScAdd1",      MENU_S_ADD1        },
-    {"ScAdd2",      MENU_S_ADD2        },
-    {"ScAdd3",      MENU_S_ADD3        },
-    {"ChSave",      MENU_MEM_CH        }, // was "MEM-CH"
-    {"ChDele",      MENU_DEL_CH        }, // was "DEL-CH"
-    {"ChName",      MENU_MEM_NAME      },
+    {"Compnd",      MENU_COMPAND       },
+    {{0x82, 0x83}, MENU_AM}, // 変調
+    {"SCAN1",       MENU_S_ADD1}, // scan list 1 membership
+    {"SCAN2",       MENU_S_ADD2}, // scan list 2 membership
+    {"SCAN3",       MENU_S_ADD3}, // scan list 3 membership
+    {{'C', 'H', 0x86, 0x87}, MENU_MEM_CH}, // CH保存
+    {{'C', 'H', 0x88, 0x89}, MENU_DEL_CH}, // CH削除
+    {{'C', 'H', 0x8A}, MENU_MEM_NAME}, // CH名
 
-    {"SList",       MENU_S_LIST        },
-    {"SList1",      MENU_SLIST1        },
-    {"SList2",      MENU_SLIST2        },
-    {"SList3",      MENU_SLIST3        },
+    {{'S', 0xD8, 0xBD, 0xC4}, MENU_S_LIST}, // Sリスト
+    {{'S', 0xD8, 0xBD, 0xC4, '1'}, MENU_SLIST1},
+    {{'S', 0xD8, 0xBD, 0xC4, '2'}, MENU_SLIST2},
+    {{'S', 0xD8, 0xBD, 0xC4, '3'}, MENU_SLIST3},
     {"ScnRev",      MENU_SC_REV        },
 #ifndef ENABLE_FEAT_F4HWN
     #ifdef ENABLE_NOAA
         {"NOAA-S",      MENU_NOAA_S    },
     #endif
 #endif
-    {"F1Shrt",      MENU_F1SHRT        },
-    {"F1Long",      MENU_F1LONG        },
-    {"F2Shrt",      MENU_F2SHRT        },
-    {"F2Long",      MENU_F2LONG        },
-    {"M Long",      MENU_MLONG         },
+    {{'F', '1', 0x8C, 0x8D}, MENU_F1SHRT}, // F1短押
+    {{'F', '1', 0x8B, 0x8D}, MENU_F1LONG}, // F1長押
+    {{'F', '2', 0x8C, 0x8D}, MENU_F2SHRT}, // F2短押
+    {{'F', '2', 0x8B, 0x8D}, MENU_F2LONG}, // F2長押
+    {{'M', 0x8B, 0x8D}, MENU_MLONG}, // M長押
 
-    {"KeyLck",      MENU_AUTOLK        }, // was "AUTOLk"
+    {{0xB7, '-', 0xDB, 0xAF, 0xB8}, MENU_AUTOLK}, // キーロック
+#ifndef ENABLE_RX_ONLY
     {"TxTOut",      MENU_TOT           }, // was "TOT"
+#endif
     {"BatSav",      MENU_SAVE          }, // was "SAVE"
-    {"BatTxt",      MENU_BAT_TXT       },
+    {{0x8F, 0x92, '%', 0x93, 0x94}, MENU_BAT_TXT}, // 電圧/%表示
+#ifndef ENABLE_RX_ONLY
     {"Mic",         MENU_MIC           },
     {"MicBar",      MENU_MIC_BAR       },
-    {"ChDisp",      MENU_MDF           }, // was "MDF"
-    {"POnMsg",      MENU_PONMSG        },
-    {"BLTime",      MENU_ABR           }, // was "ABR"
-    {"BLMin",       MENU_ABR_MIN       },
-    {"BLMax",       MENU_ABR_MAX       },
+#endif
+    {{'C', 'H', 0x93, 0x94}, MENU_MDF}, // CH表示
+    {{'O', 'N', 0x95, 0x96}, MENU_PONMSG}, // ON画面
+    {"BLTime",      MENU_ABR}, // バックライト点灯時間
+    {"BLMin",       MENU_ABR_MIN}, // バックライト最小輝度
+    {"BLMax",       MENU_ABR_MAX}, // バックライト最大輝度
+#ifndef ENABLE_RX_ONLY
     {"BLTxRx",      MENU_ABR_ON_TX_RX  },
-    {"Beep",        MENU_BEEP          },
+#endif
+    {{0xB7, '-', 0x8E}, MENU_BEEP}, // キー音
 #ifdef ENABLE_VOICE
     {"Voice",       MENU_VOICE         },
 #endif
+#ifndef ENABLE_RX_ONLY
     {"Roger",       MENU_ROGER         },
     {"STE",         MENU_STE           },
     {"RP STE",      MENU_RP_STE        },
     {"1 Call",      MENU_1_CALL        },
+#endif
 #ifdef ENABLE_ALARM
+#ifndef ENABLE_RX_ONLY
     {"AlarmT",      MENU_AL_MOD        },
 #endif
+#endif
 #ifdef ENABLE_DTMF_CALLING
+#ifndef ENABLE_RX_ONLY
     {"ANI ID",      MENU_ANI_ID        },
 #endif
+#endif
+#ifndef ENABLE_RX_ONLY
     {"UPCode",      MENU_UPCODE        },
     {"DWCode",      MENU_DWCODE        },
     {"PTT ID",      MENU_PTT_ID        },
     {"D ST",        MENU_D_ST          },
+#endif
 #ifdef ENABLE_DTMF_CALLING
+#ifndef ENABLE_RX_ONLY
     {"D Resp",      MENU_D_RSP         },
     {"D Hold",      MENU_D_HOLD        },
 #endif
+#endif
+#ifndef ENABLE_RX_ONLY
     {"D Prel",      MENU_D_PRE         },
+#endif
 #ifdef ENABLE_DTMF_CALLING
+#ifndef ENABLE_RX_ONLY
     {"D Decd",      MENU_D_DCD         },
     {"D List",      MENU_D_LIST        },
+#endif
 #endif
     {"D Live",      MENU_D_LIVE_DEC    }, // live DTMF decoder
 #ifndef ENABLE_FEAT_F4HWN
@@ -129,27 +160,33 @@ const t_menu_item MenuList[] =
         {"AM Fix",      MENU_AM_FIX        },
     #endif
 #endif
+#ifndef ENABLE_RX_ONLY
     {"VOX",         MENU_VOX           },
+#endif
 #ifdef ENABLE_FEAT_F4HWN
     {"SysInf",      MENU_VOL           }, // was "VOL"
 #else
     {"BatVol",      MENU_VOL           }, // was "VOL"
 #endif
-    {"RxMode",      MENU_TDR           },
-    {"Sql",         MENU_SQL           },
+    {{0x80, 0x81, 0xD3, '-', 0xC4, 0xDE}, MENU_TDR}, // 受信モード
+    {{0xBD, 0xB9, 0xD9, 0xC1}, MENU_SQL}, // スケルチ
 #ifdef ENABLE_FEAT_F4HWN
+#ifndef ENABLE_RX_ONLY
     {"SetPwr",      MENU_SET_PWR       },
     {"SetPTT",      MENU_SET_PTT       },
     {"SetTOT",      MENU_SET_TOT       },
     {"SetEOT",      MENU_SET_EOT       },
-    {"SetCtr",      MENU_SET_CTR       },
-    {"SetInv",      MENU_SET_INV       },
-    {"SetLck",      MENU_SET_LCK       },
-    {"SetMet",      MENU_SET_MET       },
+#endif
+    {"LCDCtr",      MENU_SET_CTR       },
+    {"LCDInv",      MENU_SET_INV       },
+    {{0xB7, '-', 0xDB, 0xAF, 0xB8}, MENU_SET_LCK}, // キーロック
+    {"SMeter",      MENU_SET_MET       },
     {"SetGUI",      MENU_SET_GUI       },
+#ifndef ENABLE_RX_ONLY
     {"SetTmr",      MENU_SET_TMR       },
+#endif
 #ifdef ENABLE_FEAT_F4HWN_SLEEP
-    {"SetOff",       MENU_SET_OFF      },
+    {"Sleep",        MENU_SET_OFF      },
 #endif
 #ifdef ENABLE_FEAT_F4HWN_NARROWER
     {"SetNFM",      MENU_SET_NFM       },
@@ -166,13 +203,17 @@ const t_menu_item MenuList[] =
 #endif
     // hidden menu items from here on
     // enabled if pressing both the PTT and upper side button at power-on
+#ifndef ENABLE_RX_ONLY
     {"F Lock",      MENU_F_LOCK        },
+#endif
+#ifndef ENABLE_RX_ONLY
 #ifndef ENABLE_FEAT_F4HWN
     {"Tx 200",      MENU_200TX         }, // was "200TX"
     {"Tx 350",      MENU_350TX         }, // was "350TX"
     {"Tx 500",      MENU_500TX         }, // was "500TX"
 #endif
     {"350 En",      MENU_350EN         }, // was "350EN"
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     {"ScraEn",      MENU_SCREN         }, // was "SCREN"
 #endif
@@ -186,7 +227,13 @@ const t_menu_item MenuList[] =
     {"",                              0xff               }  // end of list - DO NOT delete or move this this
 };
 
+#ifdef ENABLE_RX_ONLY
+// Keep the hidden-menu boot path available for EEPROM initialization and
+// battery calibration.  TX-related entries remain excluded above.
+const uint8_t FIRST_HIDDEN_MENU_ITEM = MENU_BATCAL;
+#else
 const uint8_t FIRST_HIDDEN_MENU_ITEM = MENU_F_LOCK;
+#endif
 
 const char gSubMenu_TXP[][6] =
 {
@@ -209,8 +256,15 @@ const char gSubMenu_SFT_D[][4] =
 
 const char gSubMenu_W_N[][7] =
 {
+#ifdef ENABLE_RX_ONLY
+    "W+",
+    "W",
+    "N",
+    "N-"
+#else
     "WIDE",
     "NARROW"
+#endif
 };
 
 const char gSubMenu_OFF_ON[][4] =
@@ -226,11 +280,29 @@ const char gSubMenu_NA[4] =
 
 const char* const gSubMenu_RXMode[] =
 {
+#ifdef ENABLE_RX_ONLY
+    "MAIN\nONLY",
+    "DUAL RX",
+    "SINGLE",
+#else
     "MAIN\nONLY",       // TX and RX on main only
     "DUAL RX\nRESPOND", // Watch both and respond
     "CROSS\nBAND",      // TX on main, RX on secondary
     "MAIN TX\nDUAL RX"  // always TX on main, but RX on both
+#endif
 };
+
+#ifdef ENABLE_RX_ONLY
+const char gSubMenu_RXBank[][4] =
+{
+    "ALL", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"
+};
+
+const char gSubMenu_RXBankSet[][5] =
+{
+    "NONE", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"
+};
+#endif
 
 #ifdef ENABLE_VOICE
     const char gSubMenu_VOICE[][4] =
@@ -455,7 +527,9 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
 #ifdef ENABLE_FEAT_F4HWN
     {"RX MODE",         ACTION_OPT_RXMODE},
     {"MAIN ONLY",       ACTION_OPT_MAINONLY},
+#ifndef ENABLE_RX_ONLY
     {"PTT",             ACTION_OPT_PTT},
+#endif
     {"WIDE\nNARROW",    ACTION_OPT_WN},
     #if !defined(ENABLE_SPECTRUM) || !defined(ENABLE_FMRADIO)
     {"MUTE",            ACTION_OPT_MUTE},
@@ -492,6 +566,76 @@ int32_t gSubMenuSelection;
 char    edit_original[17]; // a copy of the text before editing so that we can easily test for changes/difference
 char    edit[17];
 int     edit_index;
+
+static const char *UI_MENU_GetRxHelp(const int menuId)
+{
+    switch (menuId)
+    {
+        case MENU_SQL:         return "AUTO=measure noise";
+        case MENU_W_N:         return "W+25 W20 N12 N-6";
+        case MENU_S_ADD1:      return "scan list 1 member";
+        case MENU_S_ADD2:      return "scan list 2 member";
+        case MENU_S_ADD3:      return "scan list 3 member";
+        case MENU_R_CTCS:      return "normal/reverse tone";
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:      return "RX features master";
+        case MENU_RX_BANK:     return "scan bank filter";
+        case MENU_RX_BANK_SET: return "set channel bank";
+#endif
+        default:               return NULL;
+    }
+}
+
+#define UI_MENU_HELP_WIDTH 15u
+
+static uint8_t gMenuHelpOffset;
+
+static void UI_MENU_DrawRxHelp(const char *help)
+{
+    char visible[UI_MENU_HELP_WIDTH + 1u] = {0};
+    const size_t length = strlen(help);
+
+    // The menu number occupies the left edge of this row.  Clear the rest
+    // before drawing so an old, longer help line cannot remain on screen.
+    memset(gFrameBuffer[6] + 18, 0, LCD_WIDTH - 18);
+
+    if (length > UI_MENU_HELP_WIDTH)
+    {
+        const size_t cycle = length + 1u; // one blank separator
+        for (size_t i = 0; i < UI_MENU_HELP_WIDTH; i++)
+        {
+            const size_t position = (gMenuHelpOffset + i) % cycle;
+            visible[i] = (position < length) ? help[position] : ' ';
+        }
+    }
+    else
+    {
+        strncpy(visible, help, UI_MENU_HELP_WIDTH);
+    }
+
+    // End == 0 disables centering and keeps the 15-character window inside
+    // the 128-pixel display (18 + 15 * 7 <= 127).
+    UI_PrintStringSmallNormal(visible, 18, 0, 6);
+}
+
+void UI_MENU_TimeSlice500ms(void)
+{
+    const char *help = UI_MENU_GetRxHelp(UI_MENU_GetCurrentMenuId());
+    const size_t length = (help == NULL) ? 0u : strlen(help);
+
+    if (gScreenToDisplay != DISPLAY_MENU || length <= UI_MENU_HELP_WIDTH)
+    {
+        if (gMenuHelpOffset != 0)
+        {
+            gMenuHelpOffset = 0;
+            gUpdateDisplay = true;
+        }
+        return;
+    }
+
+    gMenuHelpOffset = (gMenuHelpOffset + 1u) % (length + 1u);
+    gUpdateDisplay = true;
+}
 
 void UI_DisplayMenu(void)
 {
@@ -616,7 +760,10 @@ void UI_DisplayMenu(void)
     switch (UI_MENU_GetCurrentMenuId())
     {
         case MENU_SQL:
-            sprintf(String, "%d", gSubMenuSelection);
+            if (gSubMenuSelection == 10)
+                strcpy(String, "AUTO");
+            else
+                sprintf(String, "%d", gSubMenuSelection);
             break;
 
         case MENU_MIC:
@@ -666,8 +813,10 @@ void UI_DisplayMenu(void)
         {
             if (gSubMenuSelection == 0)
                 strcpy(String, gSubMenu_OFF_ON[0]);
-            else
+            else if (gSubMenuSelection <= (int32_t)ARRAY_SIZE(CTCSS_Options))
                 sprintf(String, "%u.%uHz", CTCSS_Options[gSubMenuSelection - 1] / 10, CTCSS_Options[gSubMenuSelection - 1] % 10);
+            else
+                sprintf(String, "R%u.%uHz", CTCSS_Options[gSubMenuSelection - ARRAY_SIZE(CTCSS_Options) - 1] / 10, CTCSS_Options[gSubMenuSelection - ARRAY_SIZE(CTCSS_Options) - 1] % 10);
             break;
         }
 
@@ -696,6 +845,22 @@ void UI_DisplayMenu(void)
         case MENU_W_N:
             strcpy(String, gSubMenu_W_N[gSubMenuSelection]);
             break;
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
+            break;
+#endif
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_BANK:
+            strcpy(String, gSubMenu_RXBank[gSubMenuSelection]);
+            break;
+
+        case MENU_RX_BANK_SET:
+            strcpy(String, gSubMenu_RXBankSet[gSubMenuSelection]);
+            break;
+#endif
 
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
@@ -1114,17 +1279,6 @@ void UI_DisplayMenu(void)
             #endif
             break;
 
-        case MENU_TX_LOCK:
-            if(TX_freq_check(gEeprom.VfoInfo[gEeprom.TX_VFO].pTX->Frequency) == 0)
-            {
-                strcpy(String, "Inside\nF Lock\nPlan");
-            }
-            else
-            {
-                strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
-            }
-            break;
-
         case MENU_SET_LCK:
             strcpy(String, gSubMenu_SET_LCK[gSubMenuSelection]);
             break;
@@ -1330,6 +1484,10 @@ void UI_DisplayMenu(void)
         sprintf(String, "%2d", gSubMenuSelection);
         UI_PrintStringSmallNormal(String, 105, 0, 0);
     }
+
+    const char *rxHelp = UI_MENU_GetRxHelp(UI_MENU_GetCurrentMenuId());
+    if (rxHelp != NULL)
+        UI_MENU_DrawRxHelp(rxHelp);
 
     if ((UI_MENU_GetCurrentMenuId() == MENU_RESET    ||
          UI_MENU_GetCurrentMenuId() == MENU_MEM_CH   ||

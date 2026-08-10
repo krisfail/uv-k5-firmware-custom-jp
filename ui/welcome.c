@@ -32,6 +32,24 @@
     #include "screenshot.h"
 #endif
 
+#ifdef ENABLE_RX_ONLY
+static const char UI_RxOnlyWelcome0[] = {0x80, 0x81, 0x98, 0x99, 0}; // 受信専用
+static const char UI_RxOnlyWelcome1[] = "JP RX-ONLY";
+#endif
+
+static void UI_SanitizeWelcomeString(char *string, const size_t size)
+{
+    string[size - 1u] = '\0';
+    for (size_t i = 0; i < size - 1u; i++)
+    {
+        if ((uint8_t)string[i] == 0xFFu)
+        {
+            string[i] = '\0';
+            break;
+        }
+    }
+}
+
 void UI_DisplayReleaseKeys(void)
 {
     memset(gStatusLine,  0, sizeof(gStatusLine));
@@ -49,8 +67,8 @@ void UI_DisplayReleaseKeys(void)
 
 void UI_DisplayWelcome(void)
 {
-    char WelcomeString0[16];
-    char WelcomeString1[16];
+    char WelcomeString0[17];
+    char WelcomeString1[17];
     char WelcomeString2[16];
     char WelcomeString3[20];
 
@@ -77,12 +95,23 @@ void UI_DisplayWelcome(void)
 
         EEPROM_ReadBuffer(0x0EB0, WelcomeString0, 16);
         EEPROM_ReadBuffer(0x0EC0, WelcomeString1, 16);
+        UI_SanitizeWelcomeString(WelcomeString0, sizeof(WelcomeString0));
+        UI_SanitizeWelcomeString(WelcomeString1, sizeof(WelcomeString1));
 
         sprintf(WelcomeString2, "%u.%02uV %u%%",
                 gBatteryVoltageAverage / 100,
                 gBatteryVoltageAverage % 100,
                 BATTERY_VoltsToPercent(gBatteryVoltageAverage));
 
+#ifdef ENABLE_RX_ONLY
+        if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_ALL ||
+            gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_MESSAGE)
+        {
+            memcpy(WelcomeString0, UI_RxOnlyWelcome0, sizeof(UI_RxOnlyWelcome0));
+            memcpy(WelcomeString1, UI_RxOnlyWelcome1, sizeof(UI_RxOnlyWelcome1));
+        }
+        else
+#endif
         if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE)
         {
             strcpy(WelcomeString0, "VOLTAGE");
@@ -117,7 +146,7 @@ void UI_DisplayWelcome(void)
             }
         }
 
-        UI_PrintString(WelcomeString0, 0, 127, 0, 10);
+        UI_PrintString(WelcomeString0, 0, 127, 0, 8);
         UI_PrintString(WelcomeString1, 0, 127, 2, 10);
 
 #ifdef ENABLE_FEAT_F4HWN

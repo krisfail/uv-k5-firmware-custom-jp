@@ -48,15 +48,6 @@ clean() {
 
 # ------------------ BUILD VARIANTS ------------------
 
-custom() {
-    echo "🔧 Compiling Custom..."
-    docker run -v "$FIRMWARE_DIR:/app/compiled-firmware" "$IMAGE_NAME" /bin/bash -c "\
-        rm -f ./compiled-firmware/* && cd /app && make -s \
-        EDITION_STRING=Custom \
-        TARGET=f4hwn.custom \
-        && cp f4hwn.custom* compiled-firmware/"
-}
-
 standard() {
     echo "📦 Compiling Standard..."
     docker run -v "$FIRMWARE_DIR:/app/compiled-firmware" "$IMAGE_NAME" /bin/bash -c "\
@@ -66,8 +57,8 @@ standard() {
         ENABLE_AIRCOPY=0 \
         ENABLE_NOAA=0 \
         EDITION_STRING=Standard \
-        TARGET=f4hwn.standard \
-        && cp f4hwn.standard* compiled-firmware/"
+        TARGET=uv-k5-standard \
+        && cp uv-k5-standard* compiled-firmware/"
 }
 
 bandscope() {
@@ -85,8 +76,8 @@ bandscope() {
         ENABLE_NOAA=0 \
         ENABLE_FEAT_F4HWN_RESCUE_OPS=0 \
         EDITION_STRING=Bandscope \
-        TARGET=f4hwn.bandscope \
-        && cp f4hwn.bandscope* compiled-firmware/"
+        TARGET=uv-k5-bandscope \
+        && cp uv-k5-bandscope* compiled-firmware/"
 }
 
 broadcast() {
@@ -104,8 +95,8 @@ broadcast() {
         ENABLE_NOAA=0 \
         ENABLE_FEAT_F4HWN_RESCUE_OPS=0 \
         EDITION_STRING=Broadcast \
-        TARGET=f4hwn.broadcast \
-        && cp f4hwn.broadcast* compiled-firmware/"
+        TARGET=uv-k5-broadcast \
+        && cp uv-k5-broadcast* compiled-firmware/"
 }
 
 basic() {
@@ -129,8 +120,8 @@ basic() {
         ENABLE_FEAT_F4HWN_NARROWER=1 \
         ENABLE_FEAT_F4HWN_RESCUE_OPS=0 \
         EDITION_STRING=Basic \
-        TARGET=f4hwn.basic \
-        && cp f4hwn.basic* compiled-firmware/"
+        TARGET=uv-k5-basic \
+        && cp uv-k5-basic* compiled-firmware/"
 }
 
 rescueops() {
@@ -148,8 +139,8 @@ rescueops() {
         ENABLE_NOAA=1 \
         ENABLE_FEAT_F4HWN_RESCUE_OPS=1 \
         EDITION_STRING=RescueOps \
-        TARGET=f4hwn.rescueops \
-        && cp f4hwn.rescueops* compiled-firmware/"
+        TARGET=uv-k5-rescueops \
+        && cp uv-k5-rescueops* compiled-firmware/"
 }
 
 game() {
@@ -166,15 +157,14 @@ game() {
         ENABLE_NOAA=0 \
         ENABLE_FEAT_F4HWN_RESCUE_OPS=0 \
         EDITION_STRING=Game \
-        TARGET=f4hwn.game \
-        && cp f4hwn.game* compiled-firmware/"
+        TARGET=uv-k5-game \
+        && cp uv-k5-game* compiled-firmware/"
 }
 
 # ------------------ MENU ------------------
 
 case "$1" in
     clean) clean ;;
-    custom) custom ;;
     standard) standard ;;
     bandscope) bandscope ;;
     broadcast) broadcast ;;
@@ -189,7 +179,7 @@ case "$1" in
         game
         ;;
     *)
-        echo "Usage: BASE=alpine:<tag> $0 {clean|custom|standard|bandscope|broadcast|basic|rescueops|game|all}"
+        echo "Usage: BASE=alpine:<tag> $0 {clean|standard|bandscope|broadcast|basic|rescueops|game|all}"
         echo "Examples: BASE=alpine:3.22 … | BASE=alpine:3.21 … | BASE=alpine:3.19 … | BASE=alpine:edge …"
         exit 1
         ;;

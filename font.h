@@ -20,10 +20,26 @@
 #include <stdint.h>
 
 
-extern const uint8_t gFontBig[95 - 1][16 - 2];
+#define FONT_CODE_MAX 0xDF
+
+/* Large glyphs occupy two 8-row OLED pages.  The editor and the renderer
+ * use the same display-coordinate contract: rows 0-1 are top padding, rows
+ * 2-11 are the normal glyph area, and rows 12-15 are bottom padding. */
+#define FONT_BIG_CELL_ROWS 16u
+#define FONT_BIG_TOP_PADDING 2u
+#define FONT_BIG_BOTTOM_PADDING 4u
+#define FONT_JP_EXTRA_LARGE_WIDTH 10u
+#define FONT_JP_EXTRA_LARGE_PAGES 2u
+#define FONT_JP_EXTRA_LARGE_BYTES (FONT_JP_EXTRA_LARGE_WIDTH * FONT_JP_EXTRA_LARGE_PAGES)
+#define FONT_JP_EXTRA_LARGE_GLYPHS 2u
+
+extern const uint8_t gFontBig[191][16 - 2];
 extern const uint8_t gFontBigDigits[11][26 - 6];
+extern const uint8_t gFontJapaneseExtraLargeCodes[FONT_JP_EXTRA_LARGE_GLYPHS];
+extern const uint8_t gFontJapaneseExtraLarge[FONT_JP_EXTRA_LARGE_GLYPHS][FONT_JP_EXTRA_LARGE_BYTES];
 extern const uint8_t gFont3x5[96][3];
 extern const uint8_t gFontSmall[95 - 1][6];
+extern const uint8_t gFontSmallJapanese[FONT_CODE_MAX - 0x7F + 1][6];
 #ifdef ENABLE_SMALL_BOLD
     extern const uint8_t gFontSmallBold[95 - 1][6];
 #endif

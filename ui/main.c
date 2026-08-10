@@ -37,6 +37,10 @@
 #include "ui/main.h"
 #include "ui/ui.h"
 #include "audio.h"
+#ifdef ENABLE_RX_ONLY
+#include "app/rx_band_presets.h"
+#include "app/rx_feature_state.h"
+#endif
 
 #ifdef ENABLE_FEAT_F4HWN
     #include "driver/system.h"
@@ -1111,7 +1115,7 @@ void UI_DisplayMain(void)
                 const FREQ_Config_t *pConfig = (mode == VFO_MODE_TX) ? vfoInfo->pTX : vfoInfo->pRX;
                 const unsigned int code_type = pConfig->CodeType;
 #ifdef ENABLE_FEAT_F4HWN
-                const char *code_list[] = {"", "CT", "DC", "DC"};
+                const char *code_list[] = {"", "CT", "DC", "DC", "RT"};
 #else
                 const char *code_list[] = {"", "CT", "DCS", "DCR"};
 #endif
@@ -1136,6 +1140,10 @@ void UI_DisplayMain(void)
         {
             case 1:
             sprintf(String, "%u.%u", CTCSS_Options[pConfig->Code] / 10, CTCSS_Options[pConfig->Code] % 10);
+            break;
+
+            case 4:
+            sprintf(String, "R%u.%u", CTCSS_Options[pConfig->Code] / 10, CTCSS_Options[pConfig->Code] % 10);
             break;
 
             case 2:
@@ -1193,6 +1201,7 @@ void UI_DisplayMain(void)
         UI_PrintStringSmallNormal(s, LCD_WIDTH + 24, 0, line + 1);
 #endif
 
+#ifndef ENABLE_RX_ONLY
         if (state == VFO_STATE_NORMAL || state == VFO_STATE_ALARM)
         {   // show the TX power
             uint8_t currentPower = vfoInfo->OUTPUT_POWER % 8;
@@ -1232,6 +1241,7 @@ void UI_DisplayMain(void)
                 memcpy(p_line0 + 256 + arrowPos, BITMAP_PowerUser, sizeof(BITMAP_PowerUser));
             }
         }
+#endif
 
         if (vfoInfo->freq_config_RX.Frequency != vfoInfo->freq_config_TX.Frequency)
         {   // show the TX offset symbol
@@ -1292,33 +1302,59 @@ void UI_DisplayMain(void)
 
 #if ENABLE_FEAT_F4HWN
         #ifdef ENABLE_FEAT_F4HWN_NARROWER
+#ifndef ENABLE_RX_ONLY
             bool narrower = 0;
 
             if(vfoInfo->CHANNEL_BANDWIDTH == BANDWIDTH_NARROW && gSetting_set_nfm == 1)
             {
                 narrower = 1;
             }
+#endif
 
             if (gSetting_set_gui)
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
+#else
                 const char *bandWidthNames[] = {"W", "N", "N+"};
-                UI_PrintStringSmallNormal(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH + narrower], LCD_WIDTH + 80, 0, line + 1);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
+#endif
+                UI_PrintStringSmallNormal(bandWidthNames[bandWidth], LCD_WIDTH + 80, 0, line + 1);
             }
             else
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
+#else
                 const char *bandWidthNames[] = {"WIDE", "NAR", "NAR+"};
-                GUI_DisplaySmallest(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH + narrower], 91, line == 0 ? 17 : 49, false, true);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH + narrower;
+#endif
+                GUI_DisplaySmallest(bandWidthNames[bandWidth], 91, line == 0 ? 17 : 49, false, true);
             }
         #else
             if (gSetting_set_gui)
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
+#else
                 const char *bandWidthNames[] = {"W", "N"};
-                UI_PrintStringSmallNormal(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH], LCD_WIDTH + 80, 0, line + 1);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH;
+#endif
+                UI_PrintStringSmallNormal(bandWidthNames[bandWidth], LCD_WIDTH + 80, 0, line + 1);
             }
             else
             {
+#ifdef ENABLE_RX_ONLY
+                const char *bandWidthNames[] = {"W+", "W", "N", "N-"};
+                const uint8_t bandWidth = RADIO_BandwidthToMenuIndex(vfoInfo->CHANNEL_BANDWIDTH);
+#else
                 const char *bandWidthNames[] = {"WIDE", "NAR"};
-                GUI_DisplaySmallest(bandWidthNames[vfoInfo->CHANNEL_BANDWIDTH], 91, line == 0 ? 17 : 49, false, true);
+                const uint8_t bandWidth = vfoInfo->CHANNEL_BANDWIDTH;
+#endif
+                GUI_DisplaySmallest(bandWidthNames[bandWidth], 91, line == 0 ? 17 : 49, false, true);
             }
         #endif
 #else
@@ -1510,6 +1546,11 @@ void UI_DisplayMain(void)
     //#ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
     //}
     //#endif
+#endif
+
+#ifdef ENABLE_RX_ONLY
+    if (RX_BAND_PRESETS_IsOpen())
+        RX_BAND_PRESETS_Draw();
 #endif
 
     ST7565_BlitFullScreen();

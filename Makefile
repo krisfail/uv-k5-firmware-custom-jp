@@ -4,14 +4,12 @@
 # 1 = enable
 
 # ---- STOCK QUANSHENG FEATURES ----
-ENABLE_FMRADIO                  ?= 0
+ENABLE_FMRADIO                  ?= 1
 ENABLE_UART                     ?= 1
-ENABLE_AIRCOPY                  ?= 0
 ENABLE_NOAA                     ?= 0
 ENABLE_VOICE                    ?= 0
-ENABLE_VOX                      ?= 1
+ENABLE_VOX                      ?= 0
 ENABLE_ALARM                    ?= 0
-ENABLE_TX1750                   ?= 1
 ENABLE_PWRON_PASSWORD           ?= 0
 ENABLE_DTMF_CALLING             ?= 0
 ENABLE_FLASHLIGHT               ?= 1
@@ -23,7 +21,6 @@ ENABLE_SMALL_BOLD               ?= 1
 ENABLE_CUSTOM_MENU_LAYOUT       ?= 1
 ENABLE_KEEP_MEM_NAME            ?= 1
 ENABLE_WIDE_RX                  ?= 1
-ENABLE_TX_WHEN_AM               ?= 0
 ENABLE_F_CAL_MENU               ?= 0
 ENABLE_CTCSS_TAIL_PHASE_SHIFT   ?= 0
 ENABLE_BOOT_BEEPS               ?= 0
@@ -36,15 +33,16 @@ ENABLE_FASTER_CHANNEL_SCAN      ?= 1
 ENABLE_RSSI_BAR                 ?= 1
 ENABLE_AUDIO_BAR                ?= 1
 ENABLE_COPY_CHAN_TO_VFO         ?= 1
-ENABLE_REDUCE_LOW_MID_TX_POWER  ?= 0
 ENABLE_BYP_RAW_DEMODULATORS     ?= 0
 ENABLE_BLMIN_TMP_OFF            ?= 0
 ENABLE_SCAN_RANGES              ?= 1
+# Select the Japanese firmware identity and compile-time code paths.
+ENABLE_JAPANESE                 ?= 1
+# First-stage protection against rapid gain changes on ordinary FM.
+ENABLE_RX_AGC_GUARD             ?= 1
 
 # ---- CONTRIB MODS ----
 
-# Thank you @markusb
-ENABLE_REGA                     ?= 0
 # Thank you @reppad
 ENABLE_EXTRA_UART_CMD           ?= 0
 
@@ -53,8 +51,10 @@ ENABLE_EXTRA_UART_CMD           ?= 0
 ENABLE_FEAT_F4HWN               ?= 1
 ENABLE_FEAT_F4HWN_GAME          ?= 0
 ENABLE_FEAT_F4HWN_SCREENSHOT    ?= 0
-ENABLE_FEAT_F4HWN_SPECTRUM      ?= 1
-ENABLE_FEAT_F4HWN_RX_TX_TIMER   ?= 1
+# The full F4HWN spectrum module is not part of the constrained K5 image.
+# Keep the symbol off as well so an ad-hoc build cannot retain dead spectrum
+# branches while app/spectrum.o is excluded below.
+ENABLE_FEAT_F4HWN_SPECTRUM      ?= 0
 ENABLE_FEAT_F4HWN_CHARGING_C    ?= 0
 ENABLE_FEAT_F4HWN_SLEEP         ?= 1
 ENABLE_FEAT_F4HWN_RESUME_STATE  ?= 1
@@ -66,13 +66,46 @@ ENABLE_FEAT_F4HWN_VOL           ?= 0
 ENABLE_FEAT_F4HWN_RESET_CHANNEL ?= 0
 ENABLE_FEAT_F4HWN_PMR           ?= 0
 ENABLE_FEAT_F4HWN_GMRS_FRS_MURS	?= 0
-ENABLE_FEAT_F4HWN_CA            ?= 1
+# F_LOCK is a transmit-region policy and has no receiver-side value here.
+ENABLE_FEAT_F4HWN_CA            ?= 0
 ENABLE_FEAT_F4HWN_DEBUG         ?= 0
 
 # ---- DEBUGGING ----
 ENABLE_AM_FIX_SHOW_DATA         ?= 0
 ENABLE_AGC_SHOW_DATA            ?= 0
 ENABLE_UART_RW_BK_REGS          ?= 0
+
+# This Japanese target is receive-only. Keep every RF-transmit or maintenance
+# path explicitly disabled at this build boundary. Source guards remain for
+# upstream compatibility, but command-line overrides cannot re-enable them.
+override ENABLE_RX_ONLY                  := 1
+override ENABLE_SCAN_RANGES              := 1
+override ENABLE_AIRCOPY                  := 0
+override ENABLE_REGA                     := 0
+override ENABLE_TX1750                   := 0
+override ENABLE_TX_WHEN_AM               := 0
+override ENABLE_REDUCE_LOW_MID_TX_POWER  := 0
+override ENABLE_ALARM                     := 0
+override ENABLE_DTMF_CALLING              := 0
+override ENABLE_EXTRA_UART_CMD            := 0
+override ENABLE_F_CAL_MENU                := 0
+override ENABLE_UART_RW_BK_REGS           := 0
+override ENABLE_VOX                       := 0
+override ENABLE_FEAT_F4HWN_GAME           := 0
+override ENABLE_FEAT_F4HWN_SCREENSHOT     := 0
+override ENABLE_FEAT_F4HWN_SPECTRUM       := 0
+override ENABLE_FEAT_F4HWN_CHARGING_C     := 0
+override ENABLE_FEAT_F4HWN_RESCUE_OPS     := 0
+override ENABLE_FEAT_F4HWN_VOL            := 0
+override ENABLE_FEAT_F4HWN_RESET_CHANNEL  := 0
+override ENABLE_FEAT_F4HWN_PMR            := 0
+override ENABLE_FEAT_F4HWN_GMRS_FRS_MURS  := 0
+override ENABLE_FEAT_F4HWN_DEBUG          := 0
+override ENABLE_FEAT_F4HWN_CA             := 0
+override ENABLE_FEAT_F4HWN_RX_TX_TIMER    := 0
+override ENABLE_AGC_SHOW_DATA             := 0
+override ENABLE_BYP_RAW_DEMODULATORS      := 0
+override ENABLE_BAND_SCOPE                := 0
 
 # ---- COMPILER/LINKER OPTIONS ----
 ENABLE_CLANG                    ?= 0
@@ -84,7 +117,7 @@ ENABLE_EXPERIMENTAL_CLFAGS      ?= 1
 #############################################################
 
 ifeq ($(ENABLE_FEAT_F4HWN),1)
-	TARGET = f4hwn
+	TARGET = wrx-jp
 else
 	TARGET = firmware
 endif
@@ -122,7 +155,7 @@ ifeq ($(ENABLE_FMRADIO),1)
 	OBJS += driver/bk1080.o
 endif
 OBJS += driver/bk4819.o
-ifeq ($(filter $(ENABLE_AIRCOPY) $(ENABLE_UART),1),1)
+ifeq ($(ENABLE_UART),1)
 	OBJS += driver/crc.o
 endif
 OBJS += driver/eeprom.o
@@ -142,15 +175,14 @@ endif
 
 # Main
 OBJS += app/action.o
-ifeq ($(ENABLE_AIRCOPY),1)
-	OBJS += app/aircopy.o
-endif
 OBJS += app/app.o
 OBJS += app/chFrScanner.o
 OBJS += app/common.o
 OBJS += app/dtmf.o
-ifeq ($(ENABLE_REGA),1)
-	OBJS += app/rega.o
+ifeq ($(ENABLE_RX_ONLY),1)
+	OBJS += app/rx_band_presets.o
+	OBJS += app/rx_scan_skip.o
+	OBJS += app/rx_feature_state.o
 endif
 ifeq ($(ENABLE_FLASHLIGHT),1)
 	OBJS += app/flashlight.o
@@ -190,9 +222,6 @@ OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o
 OBJS += settings.o
-ifeq ($(ENABLE_AIRCOPY),1)
-	OBJS += ui/aircopy.o
-endif
 OBJS += ui/battery.o
 ifeq ($(ENABLE_FMRADIO),1)
 	OBJS += ui/fmradio.o
@@ -213,7 +242,7 @@ OBJS += main.o
 
 ifeq ($(OS), Windows_NT) # windows
     TOP := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-    RM = del /Q
+    RM = cmd /c del /Q
     FixPath = $(subst /,\,$1)
     WHERE = where
     NULL_OUTPUT = nul
@@ -246,10 +275,16 @@ ifeq ($(ENABLE_FEAT_F4HWN),1)
 	AUTHOR_STRING_1 ?= EGZUMER
 	VERSION_STRING_1 ?= v0.22
 
-	AUTHOR_STRING_2 ?= F4HWN
-	VERSION_STRING_2 ?= v4.3
-
-	EDITION_STRING ?= Custom
+	# F4HWN uses the _2 fields for the displayed and packed firmware identity.
+	ifeq ($(ENABLE_JAPANESE),1)
+		AUTHOR_STRING_2 ?= Kris
+		VERSION_STRING_2 ?= v4.3J5
+		EDITION_STRING ?= JP-RX-Only
+	else
+		AUTHOR_STRING_2 ?= F4HWN
+		VERSION_STRING_2 ?= v4.3
+		EDITION_STRING ?= Custom
+	endif
 
 	AUTHOR_STRING ?= $(AUTHOR_STRING_1)+$(AUTHOR_STRING_2)
 	VERSION_STRING ?= $(VERSION_STRING_2)
@@ -312,6 +347,14 @@ CFLAGS += -Wextra
 CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 CFLAGS += -DAUTHOR_STRING=\"$(AUTHOR_STRING)\" -DVERSION_STRING=\"$(VERSION_STRING)\"
 
+# This Japanese UV-K5 target is receive-only by design.
+ifeq ($(ENABLE_RX_ONLY),1)
+CFLAGS += -DENABLE_RX_ONLY
+endif
+ifeq ($(ENABLE_RX_AGC_GUARD),1)
+CFLAGS += -DENABLE_RX_AGC_GUARD
+endif
+
 ifeq ($(ENABLE_SPECTRUM),1)
 CFLAGS += -DENABLE_SPECTRUM
 endif
@@ -320,9 +363,6 @@ ifeq ($(ENABLE_SWD),1)
 endif
 ifeq ($(ENABLE_OVERLAY),1)
 	CFLAGS += -DENABLE_OVERLAY
-endif
-ifeq ($(ENABLE_AIRCOPY),1)
-	CFLAGS += -DENABLE_AIRCOPY
 endif
 ifeq ($(ENABLE_FMRADIO),1)
 	CFLAGS += -DENABLE_FMRADIO
@@ -348,9 +388,6 @@ endif
 ifeq ($(ENABLE_ALARM),1)
 	CFLAGS  += -DENABLE_ALARM
 endif
-ifeq ($(ENABLE_TX1750),1)
-	CFLAGS  += -DENABLE_TX1750
-endif
 ifeq ($(ENABLE_PWRON_PASSWORD),1)
 	CFLAGS  += -DENABLE_PWRON_PASSWORD
 endif
@@ -359,9 +396,6 @@ ifeq ($(ENABLE_KEEP_MEM_NAME),1)
 endif
 ifeq ($(ENABLE_WIDE_RX),1)
 	CFLAGS  += -DENABLE_WIDE_RX
-endif
-ifeq ($(ENABLE_TX_WHEN_AM),1)
-	CFLAGS  += -DENABLE_TX_WHEN_AM
 endif
 ifeq ($(ENABLE_F_CAL_MENU),1)
 	CFLAGS  += -DENABLE_F_CAL_MENU
@@ -411,9 +445,6 @@ endif
 ifeq ($(ENABLE_BAND_SCOPE),1)
 	CFLAGS += -DENABLE_BAND_SCOPE
 endif
-ifeq ($(ENABLE_REDUCE_LOW_MID_TX_POWER),1)
-	CFLAGS  += -DENABLE_REDUCE_LOW_MID_TX_POWER
-endif
 ifeq ($(ENABLE_BYP_RAW_DEMODULATORS),1)
 	CFLAGS  += -DENABLE_BYP_RAW_DEMODULATORS
 endif
@@ -426,9 +457,6 @@ endif
 ifeq ($(ENABLE_DTMF_CALLING),1)
 	CFLAGS  += -DENABLE_DTMF_CALLING
 endif
-ifeq ($(ENABLE_REGA),1)
-	CFLAGS  += -DENABLE_REGA
-endif
 ifeq ($(ENABLE_AGC_SHOW_DATA),1)
 	CFLAGS  += -DENABLE_AGC_SHOW_DATA
 endif
@@ -440,6 +468,9 @@ ifeq ($(ENABLE_UART_RW_BK_REGS),1)
 endif
 ifeq ($(ENABLE_CUSTOM_MENU_LAYOUT),1)
 	CFLAGS  += -DENABLE_CUSTOM_MENU_LAYOUT
+endif
+ifeq ($(ENABLE_JAPANESE),1)
+	CFLAGS  += -DENABLE_JAPANESE
 endif
 ifeq ($(ENABLE_FEAT_F4HWN),1)
 	CFLAGS  += -DENABLE_FEAT_F4HWN
@@ -459,9 +490,6 @@ ifeq ($(ENABLE_FEAT_F4HWN_SCREENSHOT),1)
 endif
 ifeq ($(ENABLE_FEAT_F4HWN_SPECTRUM),1)
 	CFLAGS  += -DENABLE_FEAT_F4HWN_SPECTRUM
-endif
-ifeq ($(ENABLE_FEAT_F4HWN_RX_TX_TIMER),1)
-	CFLAGS  += -DENABLE_FEAT_F4HWN_RX_TX_TIMER
 endif
 ifeq ($(ENABLE_FEAT_F4HWN_CHARGING_C),1)
 	CFLAGS  += -DENABLE_FEAT_F4HWN_CHARGING_C
@@ -560,6 +588,9 @@ endif
 endif
 
 	$(SIZE) $<
+
+test:
+	$(or $(MY_PYTHON),python) -m unittest discover -s tests -p "test_*.py" -v
 
 debug:
 	/opt/openocd/bin/openocd -c "bindto 0.0.0.0" -f interface/jlink.cfg -f dp32g030.cfg

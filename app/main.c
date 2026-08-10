@@ -43,8 +43,12 @@
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
+#include "ui/helper.h"
 #include "ui/inputbox.h"
 #include "ui/ui.h"
+#ifdef ENABLE_RX_ONLY
+#include "app/rx_band_presets.h"
+#endif
 #include <stdlib.h>
 
 static void toggle_chan_scanlist(void)
@@ -55,12 +59,15 @@ static void toggle_chan_scanlist(void)
 
     if(!IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
 #ifdef ENABLE_SCAN_RANGES
-        gScanRangeStart = gScanRangeStart ? 0 : gTxVfo->pRX->Frequency;
-        gScanRangeStop = gEeprom.VfoInfo[!gEeprom.TX_VFO].freq_config_RX.Frequency;
-        if(gScanRangeStart > gScanRangeStop)
-            SWAP(gScanRangeStart, gScanRangeStop);
+    gScanRangeStart = gScanRangeStart ? 0 : gTxVfo->pRX->Frequency;
+    gScanRangeStop = gEeprom.VfoInfo[!gEeprom.TX_VFO].freq_config_RX.Frequency;
+    if(gScanRangeStart > gScanRangeStop)
+        SWAP(gScanRangeStart, gScanRangeStop);
+#ifdef ENABLE_RX_ONLY
+    RX_BAND_PRESETS_Reset();
 #endif
-        return;
+#endif
+    return;
     }
     
     // Remove exclude
@@ -784,6 +791,13 @@ static void MAIN_Key_STAR(bool bKeyPressed, bool bKeyHeld)
     
     if (!gWasFKeyPressed) // pressed without the F-key
     {   
+#ifdef ENABLE_RX_ONLY
+        if (IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
+            RX_BAND_PRESETS_Open();
+            gUpdateStatus = true;
+            return;
+        }
+#endif
         if (gScanStateDir == SCAN_OFF 
 #ifdef ENABLE_NOAA
             && !IS_NOAA_CHANNEL(gTxVfo->CHANNEL_SAVE)
@@ -814,6 +828,17 @@ static void MAIN_Key_STAR(bool bKeyPressed, bool bKeyHeld)
             gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
             return;
         }               
+#endif
+#ifdef ENABLE_RX_ONLY
+        // The BK4819 CSS detector is meaningful only in FM demodulation.
+        // Refuse this shortcut in AM/USB instead of entering a scan state
+        // that cannot produce a tone result.
+        if (gRxVfo->Modulation != MODULATION_FM) {
+            gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+            UI_DisplayUnavailable("FM ONLY");
+            gUpdateStatus = true;
+            return;
+        }
 #endif
         // scan the CTCSS/DCS code
         gBackup_CROSS_BAND_RX_TX  = gEeprom.CROSS_BAND_RX_TX;
@@ -937,6 +962,16 @@ void MAIN_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     if (gFmRadioMode && Key != KEY_PTT && Key != KEY_EXIT) {
         if (!bKeyHeld && bKeyPressed)
             gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+#endif
+
+#ifdef ENABLE_RX_ONLY
+    if (RX_BAND_PRESETS_IsOpen()) {
+        if (Key == KEY_PTT)
+            GENERIC_Key_PTT(bKeyPressed);
+        else
+            RX_BAND_PRESETS_HandleKey(Key, bKeyPressed, bKeyHeld);
         return;
     }
 #endif

@@ -111,6 +111,11 @@ void BK1080_Mute(bool Mute)
 
 void BK1080_SetFrequency(uint16_t frequency, uint8_t band/*, uint8_t space*/)
 {
+#ifdef ENABLE_RX_ONLY
+    // Use the BK1080 76-108 MHz hardware mode; the Japanese target caps RX at 95 MHz below.
+    band = 1;
+#endif
+
     //uint8_t spacings[] = {20,10,5};
     //space %= 3;
 
@@ -135,13 +140,23 @@ void BK1080_GetFrequencyDeviation(uint16_t Frequency)
 
 uint16_t BK1080_GetFreqLoLimit(uint8_t band)
 {
+#ifdef ENABLE_RX_ONLY
+    (void)band;
+    return 760;
+#else
     static const uint16_t lim[] = {875, 760, 760, 640};
     return lim[band % 4];
+#endif
 }
 
 uint16_t BK1080_GetFreqHiLimit(uint8_t band)
 {
+#ifdef ENABLE_RX_ONLY
+    (void)band;
+    return 950;
+#else
     static const uint16_t lim[] = {1080, 1080, 900, 760};
     return lim[band % 4];
+#endif
 }
 

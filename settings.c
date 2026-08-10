@@ -17,6 +17,9 @@
 #include <string.h>
 
 #include "app/dtmf.h"
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
+#endif
 #ifdef ENABLE_FMRADIO
     #include "app/fm.h"
 #endif
@@ -73,6 +76,9 @@ void SETTINGS_InitEEPROM(void)
 #endif
     gEeprom.CHANNEL_DISPLAY_MODE  = (Data[1] < 4) ? Data[1] : MDF_FREQUENCY;    // 4 instead of 3 - extra display mode
     gEeprom.CROSS_BAND_RX_TX      = (Data[2] < 3) ? Data[2] : CROSS_BAND_OFF;
+#ifdef ENABLE_RX_ONLY
+    gEeprom.CROSS_BAND_RX_TX      = CROSS_BAND_OFF;
+#endif
     gEeprom.BATTERY_SAVE          = (Data[3] < 6) ? Data[3] : 4;
     gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
     gEeprom.BACKLIGHT_TIME        = (Data[5] < 62) ? Data[5] : 12;
@@ -117,6 +123,9 @@ void SETTINGS_InitEEPROM(void)
         EEPROM_ReadBuffer(0x0E88, &fmCfg, 4);
 
         gEeprom.FM_Band = fmCfg.band;
+#ifdef ENABLE_RX_ONLY
+        gEeprom.FM_Band = 1;
+#endif
         //gEeprom.FM_Space = fmCfg.space;
         gEeprom.FM_SelectedFrequency = 
             (fmCfg.selFreq >= BK1080_GetFreqLoLimit(gEeprom.FM_Band) && fmCfg.selFreq <= BK1080_GetFreqHiLimit(gEeprom.FM_Band)) ? 
@@ -390,6 +399,10 @@ void SETTINGS_InitEEPROM(void)
 
         // And set special session settings for actions
         gSetting_set_ptt_session = gSetting_set_ptt;
+#ifdef ENABLE_RX_ONLY
+        gSetting_set_ptt = 0;
+        gSetting_set_ptt_session = 0;
+#endif
         gEeprom.KEY_LOCK_PTT = gSetting_set_lck;
     #endif
 }
@@ -451,6 +464,10 @@ void SETTINGS_LoadCalibration(void)
         BK4819_WriteRegister(BK4819_REG_3B, 22656 + gEeprom.BK4819_XTAL_FREQ_LOW);
 //      BK4819_WriteRegister(BK4819_REG_3C, gEeprom.BK4819_XTAL_FREQ_HIGH);
     }
+
+#ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_Init();
+#endif
 }
 
 uint32_t SETTINGS_FetchChannelFrequency(const int channel)
@@ -524,6 +541,9 @@ void SETTINGS_FactoryReset(bool bIsAll)
 
     if (bIsAll)
     {
+#ifdef ENABLE_RX_ONLY
+        RX_FEATURE_STATE_Reset();
+#endif
         RADIO_InitInfo(gRxVfo, FREQ_CHANNEL_FIRST + BAND6_400MHz, 43350000);
 
         #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
@@ -825,6 +845,10 @@ void SETTINGS_SaveSettings(void)
 #ifdef ENABLE_FEAT_F4HWN_VOL
     SETTINGS_WriteCurrentVol();
 #endif
+
+#ifdef ENABLE_RX_ONLY
+    RX_FEATURE_STATE_Save();
+#endif
 }
 
 void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, uint8_t Mode)
@@ -859,16 +883,23 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
             | (pVFO->TX_LOCK << 6)
             | (pVFO->BUSY_CHANNEL_LOCK << 5)
             | (pVFO->OUTPUT_POWER      << 2)
-            | (pVFO->CHANNEL_BANDWIDTH << 1)
+            | ((RADIO_BandwidthIsWide(pVFO->CHANNEL_BANDWIDTH) ? 0u : 1u) << 1)
             | (pVFO->FrequencyReverse  << 0);
         State._8[5] = ((pVFO->DTMF_PTT_ID_TX_MODE & 7u) << 1)
+#ifdef ENABLE_RX_ONLY
+            | ((RX_FEATURE_STATE_GetChannelBank(Channel) & 0x0Fu) << 4)
+#endif
 #ifdef ENABLE_DTMF_CALLING
             | ((pVFO->DTMF_DECODING_ENABLE & 1u) << 0)
 #endif
         ;
         State._8[6] =  pVFO->STEP_SETTING;
 #ifdef ENABLE_FEAT_F4HWN
+#ifdef ENABLE_RX_ONLY
+        State._8[7] = RADIO_BANDWIDTH_EXT_MARKER | (pVFO->CHANNEL_BANDWIDTH & 3u);
+#else
         State._8[7] =  0;
+#endif
 #else
         State._8[7] =  pVFO->SCRAMBLING_TYPE;
 #endif
@@ -887,6 +918,14 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
 #endif
         }
     }
+
+#ifdef ENABLE_RX_ONLY
+    if (IS_MR_CHANNEL(Channel))
+    {
+        RX_FEATURE_STATE_SetWidePlus(Channel, pVFO->WIDE_PLUS);
+        RX_FEATURE_STATE_Save();
+    }
+#endif
 
 }
 

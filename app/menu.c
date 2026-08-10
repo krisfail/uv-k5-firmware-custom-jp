@@ -20,6 +20,11 @@
     #include "ARMCM0.h"
 #endif
 #include "app/dtmf.h"
+#ifdef ENABLE_RX_ONLY
+    #include "app/rx_feature_state.h"
+    #include "app/rx_band_presets.h"
+    #include "app/chFrScanner.h"
+#endif
 #include "app/generic.h"
 #include "app/menu.h"
 #include "app/scanner.h"
@@ -119,7 +124,11 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
     {
         case MENU_SQL:
             //*pMin = 0;
+#ifdef ENABLE_RX_ONLY
+            *pMax = 10;
+#else
             *pMax = 9;
+#endif
             break;
 
         case MENU_STEP:
@@ -164,7 +173,11 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
 
         case MENU_TDR:
             //*pMin = 0;
+#ifdef ENABLE_RX_ONLY
+            *pMax = 2;
+#else
             *pMax = ARRAY_SIZE(gSubMenu_RXMode) - 1;
+#endif
             break;
 
         #ifdef ENABLE_VOICE
@@ -199,13 +212,23 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
         case MENU_R_CTCS:
         case MENU_T_CTCS:
             //*pMin = 0;
-            *pMax = ARRAY_SIZE(CTCSS_Options);
+            *pMax = ARRAY_SIZE(CTCSS_Options) * 2;
             break;
 
         case MENU_W_N:
             //*pMin = 0;
             *pMax = ARRAY_SIZE(gSubMenu_W_N) - 1;
             break;
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            *pMax = ARRAY_SIZE(gSubMenu_OFF_ON) - 1;
+            break;
+        case MENU_RX_BANK:
+        case MENU_RX_BANK_SET:
+            *pMax = ARRAY_SIZE(gSubMenu_RXBank) - 1;
+            break;
+#endif
 
         #ifdef ENABLE_ALARM
             case MENU_AL_MOD:
@@ -406,7 +429,6 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             *pMax = 15;
             break;
 #endif
-        case MENU_TX_LOCK:
 #ifdef ENABLE_FEAT_F4HWN_INV
         case MENU_SET_INV:
             //*pMin = 0;
@@ -468,8 +490,23 @@ void MENU_AcceptSetting(void)
             return;
 
         case MENU_SQL:
+#ifdef ENABLE_RX_ONLY
+            if (gSubMenuSelection == 10)
+            {
+                RX_FEATURE_STATE_SetAutoSquelch(true);
+                gVfoConfigureMode = VFO_CONFIGURE;
+            }
+            else
+            {
+                RX_FEATURE_STATE_SetAutoSquelch(false);
+                gEeprom.SQUELCH_LEVEL = gSubMenuSelection;
+                gVfoConfigureMode = VFO_CONFIGURE;
+            }
+            RX_FEATURE_STATE_Save();
+#else
             gEeprom.SQUELCH_LEVEL = gSubMenuSelection;
             gVfoConfigureMode     = VFO_CONFIGURE;
+#endif
             break;
 
         case MENU_STEP:
@@ -514,16 +551,25 @@ void MENU_AcceptSetting(void)
             pConfig = &gTxVfo->freq_config_TX;
             [[fallthrough]];
         case MENU_R_CTCS: {
+            const size_t ctcss_count = ARRAY_SIZE(CTCSS_Options);
+            const bool is_ctcss =
+                pConfig->CodeType == CODE_TYPE_CONTINUOUS_TONE ||
+                pConfig->CodeType == CODE_TYPE_REVERSE_CONTINUOUS_TONE;
+
             if (gSubMenuSelection == 0) {
-                if (pConfig->CodeType != CODE_TYPE_CONTINUOUS_TONE) {
+                if (!is_ctcss) {
                     return;
                 }
                 pConfig->Code     = 0;
                 pConfig->CodeType = CODE_TYPE_OFF;
             }
-            else {
+            else if (gSubMenuSelection <= (int32_t)ctcss_count) {
                 pConfig->Code     = gSubMenuSelection - 1;
                 pConfig->CodeType = CODE_TYPE_CONTINUOUS_TONE;
+            }
+            else {
+                pConfig->Code     = gSubMenuSelection - (int32_t)ctcss_count - 1;
+                pConfig->CodeType = CODE_TYPE_REVERSE_CONTINUOUS_TONE;
             }
 
             gRequestSaveChannel = 1;
@@ -540,9 +586,48 @@ void MENU_AcceptSetting(void)
             return;
 
         case MENU_W_N:
+#ifdef ENABLE_RX_ONLY
+            gTxVfo->CHANNEL_BANDWIDTH = RADIO_BandwidthFromMenuIndex(gSubMenuSelection);
+            gTxVfo->WIDE_PLUS = gTxVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE_PLUS;
+#else
             gTxVfo->CHANNEL_BANDWIDTH = gSubMenuSelection;
+#endif
             gRequestSaveChannel       = 1;
             return;
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            RX_FEATURE_STATE_SetEnabled(gSubMenuSelection != 0);
+            if (!RX_FEATURE_STATE_IsEnabled())
+            {
+                RX_BAND_PRESETS_Reset();
+                gScanRangeStart = 0;
+                gScanRangeStop = 0;
+            }
+            RX_FEATURE_STATE_Save();
+            gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+            gFlagResetVfos = true;
+            gFlagReconfigureVfos = true;
+            gUpdateStatus = true;
+            gUpdateDisplay = true;
+            break;
+
+        case MENU_RX_BANK:
+            RX_FEATURE_STATE_SetSelectedBank(gSubMenuSelection);
+            RX_FEATURE_STATE_Save();
+            gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+            gFlagResetVfos = true;
+            gFlagReconfigureVfos = true;
+            gUpdateStatus = true;
+            break;
+
+        case MENU_RX_BANK_SET:
+            if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE))
+                RX_FEATURE_STATE_SetChannelBank(gTxVfo->CHANNEL_SAVE, gSubMenuSelection);
+            RX_FEATURE_STATE_Save();
+            gUpdateStatus = true;
+            break;
+#endif
 
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
@@ -621,8 +706,25 @@ void MENU_AcceptSetting(void)
             break;
 
         case MENU_TDR:
+#ifdef ENABLE_RX_ONLY
+            if (gSubMenuSelection == 2)
+            {
+                RX_FEATURE_STATE_SetSingleVfo(true);
+                gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
+            }
+            else
+            {
+                RX_FEATURE_STATE_SetSingleVfo(false);
+                gEeprom.DUAL_WATCH = (gEeprom.TX_VFO + 1) * (gSubMenuSelection == 1);
+            }
+            RX_FEATURE_STATE_Save();
+#else
             gEeprom.DUAL_WATCH = (gEeprom.TX_VFO + 1) * (gSubMenuSelection & 1);
             gEeprom.CROSS_BAND_RX_TX = (gEeprom.TX_VFO + 1) * ((gSubMenuSelection & 2) > 0);
+#endif
+#ifdef ENABLE_RX_ONLY
+            gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
+#endif
 
             #ifdef ENABLE_FEAT_F4HWN
                 gDW = gEeprom.DUAL_WATCH;
@@ -967,10 +1069,6 @@ void MENU_AcceptSetting(void)
         case MENU_SET_TMR:
             gSetting_set_tmr = gSubMenuSelection;
             break;
-        case MENU_TX_LOCK:
-            gTxVfo->TX_LOCK = gSubMenuSelection;
-            gRequestSaveChannel       = 1;
-            return;
 #endif
     }
 
@@ -997,7 +1095,11 @@ void MENU_ShowCurrentSetting(void)
     switch (UI_MENU_GetCurrentMenuId())
     {
         case MENU_SQL:
+#ifdef ENABLE_RX_ONLY
+            gSubMenuSelection = RX_FEATURE_STATE_IsAutoSquelch() ? 10 : gEeprom.SQUELCH_LEVEL;
+#else
             gSubMenuSelection = gEeprom.SQUELCH_LEVEL;
+#endif
             break;
 
         case MENU_STEP:
@@ -1024,13 +1126,21 @@ void MENU_ShowCurrentSetting(void)
                 type = gScanCssResultType;
                 code = gScanCssResultCode;
             }
-            if((menuid==MENU_R_CTCS) ^ (type==CODE_TYPE_CONTINUOUS_TONE)) { //not the same type
+            const bool is_ctcss =
+                type == CODE_TYPE_CONTINUOUS_TONE ||
+                type == CODE_TYPE_REVERSE_CONTINUOUS_TONE;
+            if((menuid==MENU_R_CTCS) != is_ctcss) { // not the same type
                 gSubMenuSelection = 0;
                 break;
             }
 
             switch (type) {
                 case CODE_TYPE_CONTINUOUS_TONE:
+                    gSubMenuSelection = code + 1;
+                    break;
+                case CODE_TYPE_REVERSE_CONTINUOUS_TONE:
+                    gSubMenuSelection = code + ARRAY_SIZE(CTCSS_Options) + 1;
+                    break;
                 case CODE_TYPE_DIGITAL:
                     gSubMenuSelection = code + 1;
                     break;
@@ -1060,7 +1170,12 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_T_CTCS:
-            gSubMenuSelection = (gTxVfo->freq_config_TX.CodeType == CODE_TYPE_CONTINUOUS_TONE) ? gTxVfo->freq_config_TX.Code + 1 : 0;
+            if (gTxVfo->freq_config_TX.CodeType == CODE_TYPE_CONTINUOUS_TONE)
+                gSubMenuSelection = gTxVfo->freq_config_TX.Code + 1;
+            else if (gTxVfo->freq_config_TX.CodeType == CODE_TYPE_REVERSE_CONTINUOUS_TONE)
+                gSubMenuSelection = gTxVfo->freq_config_TX.Code + ARRAY_SIZE(CTCSS_Options) + 1;
+            else
+                gSubMenuSelection = 0;
             break;
 
         case MENU_SFT_D:
@@ -1072,8 +1187,27 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_W_N:
+#ifdef ENABLE_RX_ONLY
+            gSubMenuSelection = RADIO_BandwidthToMenuIndex(gTxVfo->CHANNEL_BANDWIDTH);
+#else
             gSubMenuSelection = gTxVfo->CHANNEL_BANDWIDTH;
+#endif
             break;
+
+#ifdef ENABLE_RX_ONLY
+        case MENU_RX_EXT:
+            gSubMenuSelection = RX_FEATURE_STATE_IsEnabled();
+            break;
+
+        case MENU_RX_BANK:
+            gSubMenuSelection = RX_FEATURE_STATE_GetSelectedBank();
+            break;
+
+        case MENU_RX_BANK_SET:
+            gSubMenuSelection = IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE) ?
+                RX_FEATURE_STATE_GetChannelBank(gTxVfo->CHANNEL_SAVE) : 0;
+            break;
+#endif
 
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
@@ -1135,7 +1269,12 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_TDR:
+#ifdef ENABLE_RX_ONLY
+            gSubMenuSelection = RX_FEATURE_STATE_IsSingleVfo() ? 2 :
+                (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF);
+#else
             gSubMenuSelection = (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) + (gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF) * 2;
+#endif
             break;
 
         case MENU_BEEP:
@@ -1411,9 +1550,6 @@ void MENU_ShowCurrentSetting(void)
         #endif
         case MENU_SET_TMR:
             gSubMenuSelection = gSetting_set_tmr;
-            break;
-        case MENU_TX_LOCK:
-            gSubMenuSelection = gTxVfo->TX_LOCK;
             break;
 #endif
 
